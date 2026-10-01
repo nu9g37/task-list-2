@@ -47,7 +47,7 @@ export function json(data: unknown, status = 200): Response {
 export function apiError(error: unknown): Response {
   if (error instanceof ApiError) return json({ error: error.message }, error.status);
   if (error instanceof ConfigurationError) return json({ error: "Backend configuration unavailable" }, 503);
-  console.error("Project API request failed.", {
+  console.error("API request failed.", {
     type: error instanceof Error ? error.name : typeof error,
     code: typeof error === "object" && error !== null && "code" in error ? String(error.code) : undefined,
   });
