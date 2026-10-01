@@ -51,6 +51,20 @@
 .upcomingIcon { background: var(--sidebar); color: var(--orange); }
 .contentGrid { display: grid; grid-template-columns: minmax(0, 2.1fr) minmax(0, 1fr); gap: 24px; margin-top: 20px; }
 .taskPanel { min-height: 404px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+.tasks { max-height: 270px; overflow-y: auto; }
+.emptyState { padding: 24px; color: var(--muted); background: var(--surface); border-radius: 12px; }
+.noUpcoming { padding-top: 16px; }
+.loadState { padding-block: 32px; }
+.loadState h1 { font-size: 28px; font-weight: 600; margin-bottom: 12px; }
+.loadState p { color: var(--muted); margin-bottom: 20px; }
+.loadingLine { height: 36px; width: min(360px, 100%); background: var(--border); border-radius: 8px; margin-bottom: 32px; }
+.loadingCards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+.loadingCards > div { height: 112px; border: 1px solid var(--border); background: var(--surface); border-radius: 12px; }
+.projectNavItem > span:nth-child(2) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.projectNavItem { min-width: 0; }
+.projectCount { flex-shrink: 0; }
+.profile p { overflow-wrap: anywhere; }
+.upcomingCard h3 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .taskPanelHeader { padding: 19px 22px 17px 24px; }
 .taskToolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .sectionTitle { display: flex; align-items: center; gap: 12px; }
@@ -130,6 +144,7 @@
   .projectCard { height: auto; }
 }
 @media (max-width: 700px) {
+  .loadingCards { grid-template-columns: 1fr; }
   .shell { flex-direction: column; }
   .sidebar { width: 100%; min-height: 0; padding: 16px 20px; }
   .brand { margin-bottom: 16px; }
