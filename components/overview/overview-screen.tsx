@@ -8,6 +8,7 @@ import { FocusPanel } from "./focus-panel";
 import { ProjectCards } from "./project-cards";
 import { SummaryCards } from "./summary-cards";
 import { TaskList } from "./task-list";
+import { TaskForm } from "@/components/tasks/task-form";
 import { loadOverview, OverviewRequestError, type OverviewData } from "./overview-data";
 import styles from "./overview.module.css";
 
@@ -17,6 +18,7 @@ export function OverviewScreen() {
   const router = useRouter();
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
+  const [taskFormOpen, setTaskFormOpen] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -53,12 +55,13 @@ export function OverviewScreen() {
           <div><h1>{state.data.greeting}, {state.data.user.name.trim().split(/\s+/)[0] || "there"}</h1><p>Let’s make space for a productive day.</p></div>
           <div className={styles.greetingActions}>
             <span className={styles.date}><Icon name="calendar" size={16} /><time dateTime={state.data.date}>{state.data.displayDate}</time></span>
-            <button type="button" disabled className={styles.primaryButton}><Icon name="plus" size={14} />New task</button>
+            <button type="button" className={styles.primaryButton} onClick={() => setTaskFormOpen(true)}><Icon name="plus" size={14} />New task</button>
           </div>
         </section>
         <SummaryCards data={state.data} />
-        <div className={styles.contentGrid}><TaskList tasks={state.data.todayTasks} /><FocusPanel data={state.data} /></div>
+        <div className={styles.contentGrid}><TaskList tasks={state.data.todayTasks} onAddTask={() => setTaskFormOpen(true)} /><FocusPanel data={state.data} /></div>
         <ProjectCards projects={state.data.projects} />
+        <TaskForm open={taskFormOpen} projects={state.data.projects} onClose={() => setTaskFormOpen(false)} onCreated={retry} />
       </>}
     </AppShell>
   );
