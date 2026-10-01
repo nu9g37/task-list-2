@@ -99,7 +99,7 @@ export function buildOverview(user: OverviewUser, overview: OverviewResponse, pr
   const nextLabel = !next ? null : nextDate === date ? "Today" : nextDate === shiftDate(date, 1) ? "Tomorrow" : new Intl.DateTimeFormat("en-US", { timeZone: timezone, month: "short", day: "numeric" }).format(new Date(next.dueAt!));
   const hour = Number(new Intl.DateTimeFormat("en-US", { timeZone: timezone, hour: "numeric", hourCycle: "h23" }).format(new Date(overview.asOf)));
   return {
-    user, timezone, date, summary: overview.summary, projects: projectViews, tasks: taskViews, todayTasks: taskViews.filter((task) => task.dueToday),
+    user, timezone, date, summary: overview.summary, projects: projectViews, currentProject: undefined as ApiProject | undefined, tasks: taskViews, todayTasks: taskViews.filter((task) => task.dueToday),
     greeting: hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening",
     displayDate: new Intl.DateTimeFormat("en-US", { timeZone: timezone, weekday: "short", month: "short", day: "numeric", year: "numeric" }).format(new Date(overview.asOf)),
     completedThisWeek, weekDifference, upcomingCount,
@@ -110,17 +110,37 @@ export function buildOverview(user: OverviewUser, overview: OverviewResponse, pr
 
 export type OverviewData = ReturnType<typeof buildOverview>;
 
-export async function loadOverview(signal?: AbortSignal, fetcher: typeof fetch = fetch): Promise<OverviewData> {
+export function buildProjectOverview(user: OverviewUser, overview: OverviewResponse, projects: ApiProject[], allTasks: ApiTask[], projectId: string, projectTasks: ApiTask[]) {
+  const currentProject = projects.find((project) => project.id === projectId);
+  if (!currentProject) throw new OverviewRequestError(404);
+  const sidebar = buildOverview(user, overview, projects, allTasks);
+  const scoped = buildOverview(user, overview, projects, projectTasks.filter((task) => task.projectId === projectId));
+  return {
+    ...scoped,
+    projects: sidebar.projects,
+    currentProject,
+    summary: {
+      totalTasks: scoped.tasks.length,
+      todayTasks: scoped.todayTasks.filter((task) => !task.completed).length,
+      overdueTasks: projectTasks.filter((task) => task.projectId === projectId && task.status !== "DONE" && task.dueAt && new Date(task.dueAt) < new Date(overview.asOf)).length,
+      completedTasks: scoped.tasks.filter((task) => task.completed).length,
+    },
+  };
+}
+
+export async function loadOverview(signal?: AbortSignal, fetcher: typeof fetch = fetch, projectId?: string): Promise<OverviewData> {
   async function get<T>(path: string): Promise<T> {
     const response = await fetcher(path, { credentials: "same-origin", cache: "no-store", signal });
     if (!response.ok) throw new OverviewRequestError(response.status);
     return response.json();
   }
-  const [me, overview, projects, tasks] = await Promise.all([
+  const [me, overview, projects, tasks, projectTasks] = await Promise.all([
     get<{ user: OverviewUser }>("/api/me"),
     get<OverviewResponse>("/api/overview"),
     get<{ projects: ApiProject[] }>("/api/projects"),
     get<{ tasks: ApiTask[] }>("/api/tasks"),
+    projectId ? get<{ tasks: ApiTask[] }>(`/api/tasks?${new URLSearchParams({ projectId })}`) : Promise.resolve(undefined),
   ]);
+  if (projectId && projectTasks) return buildProjectOverview(me.user, overview, projects.projects, tasks.tasks, projectId, projectTasks.tasks);
   return buildOverview(me.user, overview, projects.projects, tasks.tasks);
 }

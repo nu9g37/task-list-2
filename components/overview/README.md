@@ -9,6 +9,17 @@ loaded account or stale data.
 
 `overview-data.ts` converts API data into the UI view model:
 
+`/projects/[id]` reuses the Overview layout without the Your projects section.
+Overview and project routes share `app/(workspace)/layout.tsx`. The client workspace
+layout keeps the sidebar/header mounted during navigation, retains sidebar data
+while page content loads, and preserves the project folder disclosure state.
+Page data updates the sidebar through the workspace context; creating a project
+refreshes the active page without remounting the shell.
+The server checks project ownership and returns 404 for missing, foreign or archived
+projects. The loader fetches `/api/tasks?projectId=...` for its task list, summaries,
+focus and upcoming deadline. Sidebar project counts continue to cover all projects.
+Creating a task defaults to the currently selected project.
+
 - The Tasks today card uses the Overview API's unfinished count.
 - The Task panel defaults to All tasks, including unscheduled and completed tasks.
   Today's tasks filters deadlines on the current local day; Done filters DONE.

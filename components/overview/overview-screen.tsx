@@ -2,26 +2,25 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AppShell } from "@/components/layout/app-shell";
+import { useWorkspace } from "@/components/layout/workspace-layout";
 import { Icon } from "@/components/ui/icon";
 import { FocusPanel } from "./focus-panel";
 import { ProjectCards } from "./project-cards";
 import { SummaryCards } from "./summary-cards";
 import { TaskList } from "./task-list";
 import { TaskForm } from "@/components/tasks/task-form";
-import { ProjectForm } from "@/components/projects/project-form";
 import { DeleteTaskDialog } from "@/components/tasks/delete-task-dialog";
 import { loadOverview, OverviewRequestError, type ApiTask, type OverviewTask, type OverviewData } from "./overview-data";
 import styles from "./overview.module.css";
 
 type LoadState = { kind: "loading" } | { kind: "ready"; data: OverviewData } | { kind: "error" };
 
-export function OverviewScreen() {
+export function OverviewScreen({ projectId }: { projectId?: string }) {
   const router = useRouter();
+  const { revision, publish } = useWorkspace();
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
   const [taskFormOpen, setTaskFormOpen] = useState(false);
-  const [projectFormOpen, setProjectFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<ApiTask>();
   const [deletingTask, setDeletingTask] = useState<OverviewTask>();
 
@@ -39,8 +38,11 @@ export function OverviewScreen() {
 
   useEffect(() => {
     const controller = new AbortController();
-    loadOverview(controller.signal).then((data) => {
-      if (!controller.signal.aborted) setState({ kind: "ready", data });
+    loadOverview(controller.signal, fetch, projectId).then((data) => {
+      if (!controller.signal.aborted) {
+        setState({ kind: "ready", data });
+        publish(data);
+      }
     }).catch((error: unknown) => {
       if (controller.signal.aborted) return;
       if (error instanceof OverviewRequestError && error.status === 401) {
@@ -50,7 +52,7 @@ export function OverviewScreen() {
       setState({ kind: "error" });
     });
     return () => controller.abort();
-  }, [attempt, router]);
+  }, [attempt, router, projectId, revision, publish]);
 
   function retry() {
     setState({ kind: "loading" });
@@ -71,17 +73,17 @@ export function OverviewScreen() {
     if (!response.ok) throw new Error("Could not update the task. Please try again.");
     // Keep the list mounted so its selected tab is preserved during refresh.
     try {
-      const updated = await loadOverview();
+      const updated = await loadOverview(undefined, fetch, projectId);
       setState({ kind: "ready", data: updated });
+      publish(updated);
     } catch {
       // The mutation succeeded. Reload rather than showing the old task status.
       retry();
     }
   }
 
-  const data = state.kind === "ready" ? state.data : undefined;
   return (
-    <AppShell pageTitle="Overview" user={data?.user} projects={data?.projects} onAddProject={() => setProjectFormOpen(true)}>
+    <>
       {state.kind === "loading" ? <section className={styles.loadState} role="status" aria-live="polite">
         <div className={styles.loadingLine} /><div className={styles.loadingCards}>{[1, 2, 3].map((id) => <div key={id} />)}</div>
         <p>Loading your workspace…</p>
@@ -91,7 +93,7 @@ export function OverviewScreen() {
         <button type="button" className={styles.primaryButton} onClick={retry}>Try again</button>
       </section> : <>
         <section className={styles.greeting}>
-          <div><h1>{state.data.greeting}, {state.data.user.name.trim().split(/\s+/)[0] || "there"}</h1><p>Let’s make space for a productive day.</p></div>
+          <div><h1>{state.data.currentProject?.name ?? `${state.data.greeting}, ${state.data.user.name.trim().split(/\s+/)[0] || "there"}`}</h1><p>{projectId ? "Plan, track, and move this project forward." : "Let’s make space for a productive day."}</p></div>
           <div className={styles.greetingActions}>
             <span className={styles.date}><Icon name="calendar" size={16} /><time dateTime={state.data.date}>{state.data.displayDate}</time></span>
             <button type="button" className={styles.primaryButton} onClick={createTask}><Icon name="plus" size={14} />New task</button>
@@ -99,11 +101,10 @@ export function OverviewScreen() {
         </section>
         <SummaryCards data={state.data} />
         <div className={styles.contentGrid}><TaskList tasks={state.data.tasks} onAddTask={createTask} onStatusChange={changeTaskStatus} onEditTask={editTask} onDeleteTask={setDeletingTask} /><FocusPanel data={state.data} /></div>
-        <ProjectCards projects={state.data.projects} />
-        {taskFormOpen && <TaskForm open projects={state.data.projects} task={editingTask} onClose={() => setTaskFormOpen(false)} onCreated={refreshTasks} />}
-        {projectFormOpen && <ProjectForm onClose={() => setProjectFormOpen(false)} onCreated={refreshTasks} />}
+        {!projectId && <ProjectCards projects={state.data.projects} />}
+        {taskFormOpen && <TaskForm open projects={state.data.projects} task={editingTask} defaultProjectId={projectId} onClose={() => setTaskFormOpen(false)} onCreated={refreshTasks} />}
         {deletingTask && <DeleteTaskDialog task={deletingTask} onClose={() => setDeletingTask(undefined)} onDeleted={refreshTasks} />}
       </>}
-    </AppShell>
+    </>
   );
 }

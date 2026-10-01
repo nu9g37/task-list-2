@@ -5,21 +5,29 @@
 .brand { flex-shrink: 0; }
 .navigation { display: grid; align-content: start; gap: 8px; flex: 1; min-height: 0; overflow-y: auto; }
 .navItem { border: 0; background: transparent; display: flex; align-items: center; width: 100%; height: 40px; padding: 0 10px; gap: 12px; border-radius: 8px; font-weight: 600; }
-.navItem > span { flex: 1; text-align: center; }
+.navItem > span { flex: 1; text-align: left; }
+.navItem { font-weight: 400; gap: 18px; }
+.navItem.navActive { font-weight: 600; }
 .navItem > svg { color: var(--muted); }
 .navActive { background: var(--green-soft); color: var(--green); }
 .navActive > svg { color: var(--green); }
+.navItem, .projectNavItem, .projectCardHeader h3 a { color: inherit; text-decoration: none; }
+.navItem.navActive { color: var(--green); }
+.projectNavItem:hover { background: var(--green-soft); border-radius: 8px; }
+.projectNavItem.navActive { background: var(--green-soft); color: var(--green); border-radius: 8px; }
+.projectCardHeader h3 a:hover { color: var(--green); text-decoration: underline; }
+.navItem:focus-visible, .projectNavItem:focus-visible, .projectCardHeader h3 a:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
 .projectNavigation { display: grid; gap: 4px; margin-top: 14px; }
 .projectNavigation[hidden] { display: none; }
 .projectToggle, .addProject:not(:disabled) { cursor: pointer; }
 .projectToggle:hover, .addProject:not(:disabled):hover { background: var(--green-soft); border-radius: 8px; color: var(--green); }
 .projectToggle > svg:last-child { transition: transform .15s; }
 .projectCollapsed > svg:last-child { transform: rotate(-90deg); }
-.projectNavItem { display: flex; align-items: center; gap: 10px; border: 0; background: transparent; padding: 0 10px; height: 40px; text-align: left; }
+.projectNavItem { display: flex; align-items: center; gap: 10px; border: 0; background: transparent; padding: 0 10px 0 28px; height: 40px; text-align: left; }
 .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .projectCount { margin-left: auto; color: var(--muted); font-size: 12px; }
 .addProject, .help { display: flex; gap: 8px; align-items: center; border: 0; background: transparent; font-size: 12px; color: var(--muted); }
-.addProject { height: 36px; padding: 0 10px; }
+.addProject { height: 36px; padding: 0 10px 0 28px; }
 .sidebarFooter { margin-top: auto; padding-top: 24px; flex-shrink: 0; }
 .help { padding: 0; height: 24px; margin-bottom: 26px; }
 .profile { border-top: 1px solid var(--border); padding-top: 22px; display: flex; align-items: center; gap: 10px; }

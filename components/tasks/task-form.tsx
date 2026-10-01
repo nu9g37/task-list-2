@@ -6,6 +6,7 @@ import type { ApiTask, OverviewProject } from "@/components/overview/overview-da
 import styles from "./task-form.module.css";
 
 interface TaskFormProps {
+  defaultProjectId?: string;
   task?: ApiTask;
   open: boolean;
   projects: OverviewProject[];
@@ -13,7 +14,7 @@ interface TaskFormProps {
   onCreated: () => void;
 }
 
-export function TaskForm({ open, projects, onClose, onCreated, task }: TaskFormProps) {
+export function TaskForm({ open, projects, onClose, onCreated, task, defaultProjectId }: TaskFormProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const [saving, setSaving] = useState(false);
@@ -97,7 +98,7 @@ export function TaskForm({ open, projects, onClose, onCreated, task }: TaskFormP
         </div>
         <div className={styles.field}>
           <label htmlFor="task-project">Project</label>
-          <select id="task-project" name="projectId" defaultValue={task?.projectId ?? ""}><option value="">Personal tasks</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select>
+          <select id="task-project" name="projectId" defaultValue={task ? task.projectId ?? "" : defaultProjectId ?? ""}><option value="">Personal tasks</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select>
         </div>
         <div className={styles.row}>
           <div className={styles.field}><label htmlFor="task-date">Due date <small>Optional</small></label><input id="task-date" name="dueDate" type="date" defaultValue={initialDate} /></div>
