@@ -10,6 +10,11 @@
 .navActive { background: var(--green-soft); color: var(--green); }
 .navActive > svg { color: var(--green); }
 .projectNavigation { display: grid; gap: 4px; margin-top: 14px; }
+.projectNavigation[hidden] { display: none; }
+.projectToggle, .addProject:not(:disabled) { cursor: pointer; }
+.projectToggle:hover, .addProject:not(:disabled):hover { background: var(--green-soft); border-radius: 8px; color: var(--green); }
+.projectToggle > svg:last-child { transition: transform .15s; }
+.projectCollapsed > svg:last-child { transform: rotate(-90deg); }
 .projectNavItem { display: flex; align-items: center; gap: 10px; border: 0; background: transparent; padding: 0 10px; height: 40px; text-align: left; }
 .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .projectCount { margin-left: auto; color: var(--muted); font-size: 12px; }

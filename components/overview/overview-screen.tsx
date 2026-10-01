@@ -9,6 +9,7 @@ import { ProjectCards } from "./project-cards";
 import { SummaryCards } from "./summary-cards";
 import { TaskList } from "./task-list";
 import { TaskForm } from "@/components/tasks/task-form";
+import { ProjectForm } from "@/components/projects/project-form";
 import { DeleteTaskDialog } from "@/components/tasks/delete-task-dialog";
 import { loadOverview, OverviewRequestError, type ApiTask, type OverviewTask, type OverviewData } from "./overview-data";
 import styles from "./overview.module.css";
@@ -20,6 +21,7 @@ export function OverviewScreen() {
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
   const [taskFormOpen, setTaskFormOpen] = useState(false);
+  const [projectFormOpen, setProjectFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<ApiTask>();
   const [deletingTask, setDeletingTask] = useState<OverviewTask>();
 
@@ -79,7 +81,7 @@ export function OverviewScreen() {
 
   const data = state.kind === "ready" ? state.data : undefined;
   return (
-    <AppShell pageTitle="Overview" user={data?.user} projects={data?.projects}>
+    <AppShell pageTitle="Overview" user={data?.user} projects={data?.projects} onAddProject={() => setProjectFormOpen(true)}>
       {state.kind === "loading" ? <section className={styles.loadState} role="status" aria-live="polite">
         <div className={styles.loadingLine} /><div className={styles.loadingCards}>{[1, 2, 3].map((id) => <div key={id} />)}</div>
         <p>Loading your workspace…</p>
@@ -99,6 +101,7 @@ export function OverviewScreen() {
         <div className={styles.contentGrid}><TaskList tasks={state.data.tasks} onAddTask={createTask} onStatusChange={changeTaskStatus} onEditTask={editTask} onDeleteTask={setDeletingTask} /><FocusPanel data={state.data} /></div>
         <ProjectCards projects={state.data.projects} />
         {taskFormOpen && <TaskForm open projects={state.data.projects} task={editingTask} onClose={() => setTaskFormOpen(false)} onCreated={refreshTasks} />}
+        {projectFormOpen && <ProjectForm onClose={() => setProjectFormOpen(false)} onCreated={refreshTasks} />}
         {deletingTask && <DeleteTaskDialog task={deletingTask} onClose={() => setDeletingTask(undefined)} onDeleted={refreshTasks} />}
       </>}
     </AppShell>
