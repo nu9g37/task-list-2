@@ -10,8 +10,10 @@ loaded account or stale data.
 `overview-data.ts` converts API data into the UI view model:
 
 - The Tasks today card uses the Overview API's unfinished count.
-- Today's task list includes all statuses whose deadline falls on the current
-  local day; its count can therefore exceed the unfinished card count.
+- The Task panel defaults to All tasks, including unscheduled and completed tasks.
+  Today's tasks filters deadlines on the current local day; Done filters DONE.
+  The count beside the heading follows the selected filter. Today's tasks includes
+  completed tasks and can therefore exceed the unfinished card count.
 - Daily Focus is the percentage of tasks due today that are DONE, not the number
   completed today with unrelated deadlines. No tasks means 0%, not 100%.
 - Completed this week uses `completedAt`, Monday through Sunday in the effective
@@ -24,8 +26,11 @@ loaded account or stale data.
 
 Dates, greeting and time labels use the effective timezone and `asOf` timestamp
 returned by the Overview API. The browser falls back to UTC for a timezone alias
-that its Intl implementation does not support. New task, editing, navigation and
-filter controls remain disabled in this read-only frontend step.
+that its Intl implementation does not support. New task opens the creation form.
+Task tabs filter locally. Row checkboxes save TODO/DONE through the Task API.
+The row options popover opens the shared create/edit form or a delete confirmation.
+Editing preserves the current task status and unchanged deadline precision.
+Navigation and advanced filters remain disabled.
 
 The home page checks the Better Auth session on the server before rendering and
 redirects unauthenticated requests to `/sign-in`. A 401 from the client API loader

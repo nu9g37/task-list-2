@@ -49,7 +49,7 @@ export function parseTaskInput(body: Record<string, unknown>, update = false): T
   }
   if (Object.hasOwn(body, "projectId")) input.projectId = projectId(body.projectId);
   if (Object.hasOwn(body, "status")) {
-    if (!TASK_STATUSES.includes(body.status as TaskStatus)) throw new ApiError(400, "status must be TODO, IN_PROGRESS or DONE");
+    if (!TASK_STATUSES.includes(body.status as TaskStatus)) throw new ApiError(400, "status must be TODO or DONE");
     input.status = body.status as TaskStatus;
   }
   if (Object.hasOwn(body, "priority")) {

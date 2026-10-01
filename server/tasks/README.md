@@ -28,7 +28,7 @@ POST/PATCH require `Content-Type: application/json`.
 Only `title` is required when creating. Defaults: `projectId`, `description`, `dueAt`
 and `completedAt` are null; `status` is `TODO`; `priority` is `MEDIUM`.
 `title` is trimmed and limited to 200 characters; `description` allows up to 10000.
-`status`: `TODO`, `IN_PROGRESS`, `DONE`. `priority`: `LOW`, `MEDIUM`, `HIGH`.
+`status`: `TODO`, `DONE`. `priority`: `LOW`, `MEDIUM`, `HIGH`.
 `position` is an optional non-negative PostgreSQL integer (maximum 2147483647).
 Omitting it appends within the project, or the personal list when `projectId` is null.
 Moving to another list also appends unless a position is supplied.
@@ -38,7 +38,7 @@ Explicit positions do not reorder other tasks or guarantee uniqueness.
 PATCH accepts any non-empty subset of these fields. Set `projectId: null` to move to
 the personal list, or `dueAt: null` to clear the deadline. Setting `status: "DONE"`
 records `completedAt` automatically; repeated DONE/ordinary edits preserve it.
-Changing to TODO or IN_PROGRESS clears it. Clients cannot supply `id`, `userId`,
+Changing to TODO clears it. Clients cannot supply `id`, `userId`,
 `completedAt`, `createdAt`, `updatedAt` or other unsupported fields.
 
 Deadlines accept a valid ISO datetime with seconds, optional 1–3 fractional digits,

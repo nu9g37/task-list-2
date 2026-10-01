@@ -84,7 +84,7 @@ CREATE TABLE public.tasks (
     "title" text NOT NULL CHECK (length(btrim("title")) > 0),
     "description" text,
     "status" text NOT NULL DEFAULT 'TODO'
-        CHECK ("status" IN ('TODO', 'IN_PROGRESS', 'DONE')),
+        CHECK ("status" IN ('TODO', 'DONE')),
     "priority" text NOT NULL DEFAULT 'MEDIUM'
         CHECK ("priority" IN ('LOW', 'MEDIUM', 'HIGH')),
     -- A single deadline containing both date and time. Null = unscheduled.

@@ -1,7 +1,7 @@
 import type { Project } from "./project";
 import type { User } from "./user";
 
-export const TASK_STATUSES = ["TODO", "IN_PROGRESS", "DONE"] as const;
+export const TASK_STATUSES = ["TODO", "DONE"] as const;
 export type TaskStatus = (typeof TASK_STATUSES)[number];
 
 export const TASK_PRIORITIES = ["LOW", "MEDIUM", "HIGH"] as const;

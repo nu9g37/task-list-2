@@ -11,6 +11,9 @@
 
 ## ข้อตกลงของ schema
 
+ฐานข้อมูลเดิมให้รัน `migrations/0002_remove_in_progress.sql` เพื่อเปลี่ยนสถานะ
+`IN_PROGRESS` เป็น `TODO` และจำกัดสถานะงานให้เหลือ `TODO` กับ `DONE`
+
 - รหัสเป็น text; Better Auth สร้างรหัส Auth ส่วน backend ต้องสร้างรหัส Project / Task
 - ชื่อคอลัมน์ camelCase ใช้ double quotes ใน SQL เช่น `"userId"`, `"dueAt"`
 - `dueAt` รวมวันและเวลาเป็น `timestamptz`; ไม่มี start/end time, project deadline หรือ deletedAt

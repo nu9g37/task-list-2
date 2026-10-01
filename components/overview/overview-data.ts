@@ -9,6 +9,7 @@ export interface OverviewUser {
 }
 
 export interface ApiTask {
+  description: string | null;
   id: string;
   projectId: string | null;
   title: string;
@@ -33,12 +34,14 @@ export interface OverviewProject extends ApiProject {
   progress: number;
 }
 export interface OverviewTask {
+  source: ApiTask;
   id: string;
   title: string;
   project: string;
   detail: string;
   priority: "High" | "Medium" | "Low" | "Done";
   completed: boolean;
+  dueToday: boolean;
 }
 
 export class OverviewRequestError extends Error {
@@ -73,13 +76,15 @@ export function buildOverview(user: OverviewUser, overview: OverviewResponse, pr
   });
   const today = tasks.filter((task) => task.dueAt && localDate(task.dueAt, timezone) === date);
   const completedToday = today.filter((task) => task.status === "DONE").length;
-  const todayViews: OverviewTask[] = today.map((task) => ({
+  const taskViews: OverviewTask[] = tasks.map((task) => ({
+    source: task,
     id: task.id,
     title: task.title,
     project: task.projectId ? projectNames.get(task.projectId) ?? "Project" : "Personal tasks",
-    detail: task.status === "DONE" ? "Completed" : `Today, ${time(task.dueAt!)}`,
+    detail: task.status === "DONE" ? "Completed" : !task.dueAt ? "No due date" : localDate(task.dueAt, timezone) === date ? `Today, ${time(task.dueAt)}` : new Intl.DateTimeFormat("en-US", { timeZone: timezone, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(task.dueAt)),
     priority: task.status === "DONE" ? "Done" : task.priority === "HIGH" ? "High" : task.priority === "MEDIUM" ? "Medium" : "Low",
     completed: task.status === "DONE",
+    dueToday: !!task.dueAt && localDate(task.dueAt, timezone) === date,
   }));
   const weekday = new Date(`${date}T12:00:00Z`).getUTCDay();
   const weekStart = shiftDate(date, -((weekday + 6) % 7));
@@ -94,7 +99,7 @@ export function buildOverview(user: OverviewUser, overview: OverviewResponse, pr
   const nextLabel = !next ? null : nextDate === date ? "Today" : nextDate === shiftDate(date, 1) ? "Tomorrow" : new Intl.DateTimeFormat("en-US", { timeZone: timezone, month: "short", day: "numeric" }).format(new Date(next.dueAt!));
   const hour = Number(new Intl.DateTimeFormat("en-US", { timeZone: timezone, hour: "numeric", hourCycle: "h23" }).format(new Date(overview.asOf)));
   return {
-    user, timezone, date, summary: overview.summary, projects: projectViews, todayTasks: todayViews,
+    user, timezone, date, summary: overview.summary, projects: projectViews, tasks: taskViews, todayTasks: taskViews.filter((task) => task.dueToday),
     greeting: hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening",
     displayDate: new Intl.DateTimeFormat("en-US", { timeZone: timezone, weekday: "short", month: "short", day: "numeric", year: "numeric" }).format(new Date(overview.asOf)),
     completedThisWeek, weekDifference, upcomingCount,

@@ -81,7 +81,7 @@ try {
   const fixtures = [
     [owner.id, null, "TODO", null],
     [owner.id, activeId, "TODO", start],
-    [owner.id, activeId, "IN_PROGRESS", endOfToday],
+    [owner.id, activeId, "TODO", endOfToday],
     [owner.id, activeId, "TODO", finish],
     [owner.id, null, "TODO", yesterday],
     [owner.id, null, "DONE", yesterday],

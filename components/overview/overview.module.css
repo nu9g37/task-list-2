@@ -82,6 +82,16 @@
 .taskRow input { appearance: none; margin: 0; align-self: flex-start; margin-top: 2px; width: 16px; height: 16px; flex-shrink: 0; border: 1px solid #838984; border-radius: 4px; background: white; }
 .taskRow input:checked { background: #898e8b; border-color: #898e8b; position: relative; }
 .taskRow input:checked::after { content: ""; position: absolute; width: 8px; height: 5px; left: 3px; top: 3px; border-left: 2px solid white; border-bottom: 2px solid white; transform: rotate(-45deg); }
+.taskRow input { cursor: pointer; }
+.taskRow input:checked { background: var(--green); border-color: var(--green); }
+.taskRow input:disabled { cursor: wait; opacity: .6; }
+.taskUpdateError { margin: 0; padding: 10px 24px; color: #a63f32; background: #fff3f0; font-size: 12px; }
+.taskMenu { position: fixed; inset: auto; margin: 0; width: 136px; padding: 5px; border: 1px solid var(--border); border-radius: 9px; background: white; box-shadow: 0 6px 20px #172b2020; }
+.taskMenu:popover-open { display: grid; }
+.taskMenu button { padding: 9px 12px; border: 0; border-radius: 5px; background: transparent; text-align: left; font-size: 12px; cursor: pointer; }
+.taskMenu button:hover, .taskMenu button:focus-visible { background: var(--sidebar); }
+.taskMenu .deleteMenuItem { color: #b74f40; }
+.taskRow > .iconButton:not(:disabled) { cursor: pointer; }
 .taskCopy { flex: 1; min-width: 0; }
 .taskCopy p { margin: 0; font-size: 14px; line-height: 20px; }
 .taskCopy > span { display: block; color: var(--muted); font-size: 11px; line-height: 17px; }

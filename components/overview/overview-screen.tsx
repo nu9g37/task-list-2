@@ -9,7 +9,8 @@ import { ProjectCards } from "./project-cards";
 import { SummaryCards } from "./summary-cards";
 import { TaskList } from "./task-list";
 import { TaskForm } from "@/components/tasks/task-form";
-import { loadOverview, OverviewRequestError, type OverviewData } from "./overview-data";
+import { DeleteTaskDialog } from "@/components/tasks/delete-task-dialog";
+import { loadOverview, OverviewRequestError, type ApiTask, type OverviewTask, type OverviewData } from "./overview-data";
 import styles from "./overview.module.css";
 
 type LoadState = { kind: "loading" } | { kind: "ready"; data: OverviewData } | { kind: "error" };
@@ -19,6 +20,20 @@ export function OverviewScreen() {
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
   const [taskFormOpen, setTaskFormOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<ApiTask>();
+  const [deletingTask, setDeletingTask] = useState<OverviewTask>();
+
+  function createTask() {
+    setEditingTask(undefined);
+    setTaskFormOpen(true);
+  }
+
+  function editTask(task: OverviewTask) {
+    setEditingTask(task.source);
+    setTaskFormOpen(true);
+  }
+
+  function refreshTasks() { setAttempt((value) => value + 1); }
 
   useEffect(() => {
     const controller = new AbortController();
@@ -40,6 +55,28 @@ export function OverviewScreen() {
     setAttempt((value) => value + 1);
   }
 
+  async function changeTaskStatus(id: string, completed: boolean) {
+    const response = await fetch(`/api/tasks/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: completed ? "DONE" : "TODO" }),
+    });
+    if (response.status === 401) {
+      router.replace("/sign-in");
+      throw new Error("Your session has ended. Please sign in again.");
+    }
+    if (!response.ok) throw new Error("Could not update the task. Please try again.");
+    // Keep the list mounted so its selected tab is preserved during refresh.
+    try {
+      const updated = await loadOverview();
+      setState({ kind: "ready", data: updated });
+    } catch {
+      // The mutation succeeded. Reload rather than showing the old task status.
+      retry();
+    }
+  }
+
   const data = state.kind === "ready" ? state.data : undefined;
   return (
     <AppShell pageTitle="Overview" user={data?.user} projects={data?.projects}>
@@ -55,13 +92,14 @@ export function OverviewScreen() {
           <div><h1>{state.data.greeting}, {state.data.user.name.trim().split(/\s+/)[0] || "there"}</h1><p>Let’s make space for a productive day.</p></div>
           <div className={styles.greetingActions}>
             <span className={styles.date}><Icon name="calendar" size={16} /><time dateTime={state.data.date}>{state.data.displayDate}</time></span>
-            <button type="button" className={styles.primaryButton} onClick={() => setTaskFormOpen(true)}><Icon name="plus" size={14} />New task</button>
+            <button type="button" className={styles.primaryButton} onClick={createTask}><Icon name="plus" size={14} />New task</button>
           </div>
         </section>
         <SummaryCards data={state.data} />
-        <div className={styles.contentGrid}><TaskList tasks={state.data.todayTasks} onAddTask={() => setTaskFormOpen(true)} /><FocusPanel data={state.data} /></div>
+        <div className={styles.contentGrid}><TaskList tasks={state.data.tasks} onAddTask={createTask} onStatusChange={changeTaskStatus} onEditTask={editTask} onDeleteTask={setDeletingTask} /><FocusPanel data={state.data} /></div>
         <ProjectCards projects={state.data.projects} />
-        <TaskForm open={taskFormOpen} projects={state.data.projects} onClose={() => setTaskFormOpen(false)} onCreated={retry} />
+        {taskFormOpen && <TaskForm open projects={state.data.projects} task={editingTask} onClose={() => setTaskFormOpen(false)} onCreated={refreshTasks} />}
+        {deletingTask && <DeleteTaskDialog task={deletingTask} onClose={() => setDeletingTask(undefined)} onDeleted={refreshTasks} />}
       </>}
     </AppShell>
   );

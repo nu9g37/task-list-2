@@ -2,21 +2,26 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Icon } from "@/components/ui/icon";
-import type { OverviewProject } from "@/components/overview/overview-data";
+import type { ApiTask, OverviewProject } from "@/components/overview/overview-data";
 import styles from "./task-form.module.css";
 
 interface TaskFormProps {
+  task?: ApiTask;
   open: boolean;
   projects: OverviewProject[];
   onClose: () => void;
   onCreated: () => void;
 }
 
-export function TaskForm({ open, projects, onClose, onCreated }: TaskFormProps) {
+export function TaskForm({ open, projects, onClose, onCreated, task }: TaskFormProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const originalDue = task?.dueAt ? new Date(task.dueAt) : null;
+  const localDue = originalDue ? new Date(originalDue.getTime() - originalDue.getTimezoneOffset() * 60000).toISOString() : "";
+  const initialDate = localDue.slice(0, 10);
+  const initialTime = localDue.slice(11, 16) || "09:00";
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -43,11 +48,11 @@ export function TaskForm({ open, projects, onClose, onCreated }: TaskFormProps) 
     const dueTime = String(values.get("dueTime") || "09:00");
     const due = dueDate ? new Date(`${dueDate}T${dueTime}:00`) : null;
     if (due && !Number.isFinite(due.getTime())) { setError("Please enter a valid due date and time."); return; }
-    const dueAt = due?.toISOString() ?? null;
+    const dueAt = task && dueDate === initialDate && dueTime === initialTime ? task.dueAt : due?.toISOString() ?? null;
     setSaving(true);
     try {
-      const response = await fetch("/api/tasks", {
-        method: "POST",
+      const response = await fetch(task ? `/api/tasks/${encodeURIComponent(task.id)}` : "/api/tasks", {
+        method: task ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
         body: JSON.stringify({
@@ -60,7 +65,7 @@ export function TaskForm({ open, projects, onClose, onCreated }: TaskFormProps) 
       });
       if (!response.ok) {
         const result: { error?: string } = await response.json().catch(() => ({}));
-        setError(response.status === 401 ? "Your session has ended. Please sign in again." : result.error || "Could not create the task. Please try again.");
+        setError(response.status === 401 ? "Your session has ended. Please sign in again." : result.error || "Could not save the task. Please try again.");
         return;
       }
       formRef.current?.reset();
@@ -76,7 +81,7 @@ export function TaskForm({ open, projects, onClose, onCreated }: TaskFormProps) 
   return <dialog ref={dialogRef} className={styles.dialog} onClose={close} onCancel={(event) => { if (saving) event.preventDefault(); }} aria-labelledby="task-form-heading" aria-describedby="task-form-description">
     <div className={styles.content}>
     <div className={styles.header}>
-      <h2 id="task-form-heading">Create a task</h2>
+      <h2 id="task-form-heading">{task ? "Edit task" : "Create a task"}</h2>
       <button type="button" className={styles.close} onClick={close} disabled={saving} aria-label="Close task form">×</button>
     </div>
     <p id="task-form-description" className={styles.intro}>Give it a name, then make a little room to get it done.</p>
@@ -84,26 +89,26 @@ export function TaskForm({ open, projects, onClose, onCreated }: TaskFormProps) 
       <fieldset disabled={saving}>
         <div className={styles.field}>
           <label htmlFor="task-title">Task name <span>*</span></label>
-          <input id="task-title" name="title" type="text" placeholder="What needs to be done?" required maxLength={200} autoFocus />
+          <input id="task-title" name="title" type="text" defaultValue={task?.title} placeholder="What needs to be done?" required maxLength={200} autoFocus />
         </div>
         <div className={styles.field}>
           <label htmlFor="task-description">Description <small>Optional</small></label>
-          <textarea id="task-description" name="description" placeholder="Add a few details to remember later..." rows={3} maxLength={10000} />
+          <textarea id="task-description" name="description" defaultValue={task?.description ?? ""} placeholder="Add a few details to remember later..." rows={3} maxLength={10000} />
         </div>
         <div className={styles.field}>
           <label htmlFor="task-project">Project</label>
-          <select id="task-project" name="projectId" defaultValue=""><option value="">Personal tasks</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select>
+          <select id="task-project" name="projectId" defaultValue={task?.projectId ?? ""}><option value="">Personal tasks</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select>
         </div>
         <div className={styles.row}>
-          <div className={styles.field}><label htmlFor="task-date">Due date <small>Optional</small></label><input id="task-date" name="dueDate" type="date" /></div>
-          <div className={styles.field}><label htmlFor="task-time">Time</label><input id="task-time" name="dueTime" type="time" defaultValue="09:00" /></div>
+          <div className={styles.field}><label htmlFor="task-date">Due date <small>Optional</small></label><input id="task-date" name="dueDate" type="date" defaultValue={initialDate} /></div>
+          <div className={styles.field}><label htmlFor="task-time">Time</label><input id="task-time" name="dueTime" type="time" defaultValue={initialTime} /></div>
         </div>
         <div className={styles.field}>
           <label htmlFor="task-priority">Priority</label>
-          <select id="task-priority" name="priority" defaultValue="MEDIUM"><option value="LOW">Low</option><option value="MEDIUM">Medium</option><option value="HIGH">High</option></select>
+          <select id="task-priority" name="priority" defaultValue={task?.priority ?? "MEDIUM"}><option value="LOW">Low</option><option value="MEDIUM">Medium</option><option value="HIGH">High</option></select>
         </div>
         {error && <p role="alert" className={styles.error}>{error}</p>}
-        <div className={styles.footer}><button type="button" className={styles.cancel} onClick={close}>Cancel</button><button type="submit" className={styles.submit}>{saving ? "Creating…" : "Create task"}<Icon name="arrow" size={16} /></button></div>
+        <div className={styles.footer}><button type="button" className={styles.cancel} onClick={close}>Cancel</button><button type="submit" className={styles.submit}>{saving ? "Saving…" : task ? "Save changes" : "Create task"}<Icon name="arrow" size={16} /></button></div>
       </fieldset>
     </form>
     </div>
