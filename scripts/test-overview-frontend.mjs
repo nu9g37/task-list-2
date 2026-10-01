@@ -52,6 +52,10 @@ abort.abort();
 await assert.rejects(loadOverview(abort.signal, async (_path, options) => { options.signal.throwIfAborted(); }), { name: "AbortError" });
 
 try {
+  const anonymousHome = await fetch(base + "/", { redirect: "manual" });
+  assert.equal(anonymousHome.status, 307);
+  assert.equal(anonymousHome.headers.get("location"), "/sign-in");
+  assert.equal((await fetch(base + "/sign-in")).status, 200);
   const fetchFor = (cookie) => async (path, options) => {
     assert.equal(options.credentials, "same-origin");
     assert.equal(options.cache, "no-store");
@@ -70,6 +74,9 @@ try {
     users.push({ id: data.user.id, cookie: response.headers.getSetCookie().map((value) => value.split(";")[0]).join("; ") });
   }
   const owner = users[0];
+  const authenticatedHome = await fetch(base + "/", { redirect: "manual", headers: { Cookie: owner.cookie } });
+  assert.equal(authenticatedHome.status, 200);
+  assert.equal(authenticatedHome.headers.get("location"), null);
   const empty = await loadOverview(undefined, fetchFor(owner.cookie));
   assert.equal(empty.user.id, owner.id);
   assert.equal(empty.summary.totalTasks, 0);
@@ -96,7 +103,11 @@ try {
   assert.equal(foreign.summary.totalTasks, 0);
   assert.deepEqual(foreign.projects, []);
   assert.deepEqual(foreign.todayTasks, []);
-  console.log("Overview frontend passed: live four-API loading, owner isolation, empty/archive states, timezone/week boundaries, project/focus progress, 401/503 and cancellation.");
+  await pool.query('UPDATE public."session" SET "expiresAt" = now() - interval \'1 minute\' WHERE "userId" = $1', [owner.id]);
+  const expiredHome = await fetch(base + "/", { redirect: "manual", headers: { Cookie: owner.cookie } });
+  assert.equal(expiredHome.status, 307);
+  assert.equal(expiredHome.headers.get("location"), "/sign-in");
+  console.log("Overview frontend passed: anonymous/expired-session redirects, authenticated page access, live four-API loading, owner isolation, empty/archive states, timezone/week boundaries, project/focus progress, 401/503 and cancellation.");
 } finally {
   if (userIds.length) {
     const client = await pool.connect();

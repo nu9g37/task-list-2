@@ -1,8 +1,9 @@
-.shell { display: flex; min-height: 100dvh; }
-.sidebar { width: 244px; flex-shrink: 0; background: var(--sidebar); padding: 22px 20px 26px; display: flex; flex-direction: column; min-height: 100dvh; }
+.shell { display: flex; height: 100dvh; overflow: hidden; }
+.sidebar { width: 244px; height: 100%; min-height: 0; flex-shrink: 0; overflow: hidden; background: var(--sidebar); padding: 22px 20px 26px; display: flex; flex-direction: column; }
 .brand { display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 650; margin-bottom: 26px; white-space: nowrap; }
 .logo { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--green); color: white; font-size: 24px; font-weight: 500; }
-.navigation { display: grid; gap: 8px; }
+.brand { flex-shrink: 0; }
+.navigation { display: grid; align-content: start; gap: 8px; flex: 1; min-height: 0; overflow-y: auto; }
 .navItem { border: 0; background: transparent; display: flex; align-items: center; width: 100%; height: 40px; padding: 0 10px; gap: 12px; border-radius: 8px; font-weight: 600; }
 .navItem > span { flex: 1; text-align: center; }
 .navItem > svg { color: var(--muted); }
@@ -14,7 +15,7 @@
 .projectCount { margin-left: auto; color: var(--muted); font-size: 12px; }
 .addProject, .help { display: flex; gap: 8px; align-items: center; border: 0; background: transparent; font-size: 12px; color: var(--muted); }
 .addProject { height: 36px; padding: 0 10px; }
-.sidebarFooter { margin-top: auto; padding-top: 40px; }
+.sidebarFooter { margin-top: auto; padding-top: 24px; flex-shrink: 0; }
 .help { padding: 0; height: 24px; margin-bottom: 26px; }
 .profile { border-top: 1px solid var(--border); padding-top: 22px; display: flex; align-items: center; gap: 10px; }
 .avatar { width: 36px; height: 36px; border-radius: 12px; background: #dcedc6; color: var(--green); display: grid; place-items: center; font-size: 12px; }
@@ -22,7 +23,8 @@
 .profile p { margin: 0; font-weight: 500; line-height: 20px; }
 .profile > div > span { display: block; font-size: 12px; line-height: 16px; color: var(--muted); }
 .profile > svg { color: var(--muted); }
-.workspace { flex: 1; min-width: 0; }
+.workspace { display: flex; flex-direction: column; flex: 1; height: 100%; min-width: 0; min-height: 0; overflow: hidden; }
+.header { flex-shrink: 0; }
 .header { height: 72px; padding: 0 40px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .breadcrumb { display: flex; align-items: center; gap: 20px; font-size: 12px; white-space: nowrap; }
 .breadcrumb > span:first-child, .breadcrumb > svg { color: var(--muted); }
@@ -31,7 +33,7 @@
 .search input { min-width: 0; width: 100%; border: 0; outline: 0; background: transparent; font-size: 12px; color: var(--muted); }
 .search input::placeholder { color: var(--muted); opacity: 1; }
 .iconButton { border: 0; background: transparent; color: var(--muted); display: grid; place-items: center; padding: 0; width: 20px; height: 24px; flex-shrink: 0; }
-.main { padding: 32px 40px 54px; max-width: 1600px; margin: 0 auto; }
+.main { flex: 1; min-height: 0; overflow-y: auto; width: 100%; padding: 32px 40px 54px; max-width: 1600px; margin: 0 auto; }
 .greeting { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 30px; min-height: 66px; }
 .greeting h1 { margin: 0; font-size: 32px; line-height: 42px; letter-spacing: -.7px; font-weight: 650; }
 .greeting p { color: var(--muted); margin: 4px 0 0; line-height: 20px; }
@@ -118,7 +120,6 @@
 .projectCard > p { color: var(--muted); font-size: 12px; margin: 12px 0; line-height: 18px; }
 .projectCard > p:last-child { margin-top: 10px; }
 
-@media (min-width: 1600px) { .sidebar { position: sticky; top: 0; height: 100dvh; } }
 @media (max-width: 1200px) {
   .sidebar { width: 220px; padding-inline: 16px; }
   .header { padding-inline: 28px; }
@@ -146,7 +147,8 @@
 @media (max-width: 700px) {
   .loadingCards { grid-template-columns: 1fr; }
   .shell { flex-direction: column; }
-  .sidebar { width: 100%; min-height: 0; padding: 16px 20px; }
+  .sidebar { width: 100%; height: auto; min-height: 0; padding: 16px 20px; }
+  .workspace { height: auto; }
   .brand { margin-bottom: 16px; }
   .navigation { grid-template-columns: repeat(3, 1fr); gap: 6px; }
   .navItem { gap: 6px; padding: 0 8px; font-size: 12px; }

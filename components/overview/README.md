@@ -27,10 +27,16 @@ returned by the Overview API. The browser falls back to UTC for a timezone alias
 that its Intl implementation does not support. New task, editing, navigation and
 filter controls remain disabled in this read-only frontend step.
 
-The browser must have a Better Auth session cookie to show account data. Login UI
-is not implemented yet. A login performed in Postman does not log the browser in.
-`Check session` retries loading after the session is established; refresh reloads
-data after external edits.
+The home page checks the Better Auth session on the server before rendering and
+redirects unauthenticated requests to `/sign-in`. A 401 from the client API loader
+also replaces the current route with `/sign-in` if the session expires during load.
+Other API errors remain retryable. The sign-in form returns to `/` on success.
+A login performed in Postman does not log the browser in.
+
+The dashboard shell occupies one viewport. The header/sidebar stay in place while
+the main content scrolls independently. Long navigation lists have their own scroll
+area while the profile stays at the bottom. On mobile the compact navigation stays
+above the independently scrolling content.
 
 Verification with the local Next dev server and PostgreSQL running:
 
