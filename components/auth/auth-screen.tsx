@@ -67,7 +67,7 @@ export function AuthScreen({ mode }: { mode: "sign-in" | "sign-up" }) {
           <Link href={signingUp ? "/sign-in" : "/sign-up"}>{signingUp ? "Sign in" : "Create an account"}<Icon name="arrow" size={15} /></Link>
         </div>
         <div className={styles.formContent}>
-          <div className={styles.formIcon}><Icon name={signingUp ? "plus" : "grid"} size={22} /></div>
+          {/* <div className={styles.formIcon}><Icon name={signingUp ? "plus" : "grid"} size={22} /></div> */}
           <h2 id="auth-heading">{signingUp ? "A fresh start." : "Welcome back."}</h2>
           <p className={styles.subtitle}>{signingUp ? "Create your account. Make space for a better day." : "A little focus. A little progress. A day that’s yours."}</p>
           <form onSubmit={handleSubmit} className={styles.form}>
