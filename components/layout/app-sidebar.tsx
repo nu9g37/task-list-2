@@ -7,7 +7,7 @@ import { Icon } from "@/components/ui/icon";
 import type { OverviewProject, OverviewUser } from "@/components/overview/overview-data";
 import styles from "@/components/overview/overview.module.css";
 
-export function AppSidebar({ user, projects, onAddProject, activeProjectId }: { user?: OverviewUser; projects: OverviewProject[]; onAddProject?: () => void; activeProjectId?: string }) {
+export function AppSidebar({ user, projects, onAddProject, activeProjectId, onOpenProfile }: { user?: OverviewUser; projects: OverviewProject[]; onAddProject?: () => void; activeProjectId?: string; onOpenProfile?: () => void }) {
   const [projectsOpen, setProjectsOpen] = useState(true);
   const calendarActive = usePathname() === "/calendar";
   const projectListId = useId();
@@ -23,6 +23,6 @@ export function AppSidebar({ user, projects, onAddProject, activeProjectId }: { 
         <button type="button" disabled={!onAddProject || !user} className={styles.addProject} onClick={onAddProject}><Icon name="plus" size={16} />Add project</button>
       </div>
     </nav>
-    <div className={styles.sidebarFooter}><button type="button" disabled className={styles.help}><Icon name="help" size={18} />Help &amp; shortcuts</button><div className={styles.profile}><span className={styles.avatar}>{initials}</span><div><p>{user?.name ?? "Your workspace"}</p><span>Personal workspace</span></div><Icon name="chevron" size={16} /></div></div>
+    <div className={styles.sidebarFooter}><button type="button" disabled className={styles.help}><Icon name="help" size={18} />Help &amp; shortcuts</button><button type="button" className={styles.profile} onClick={onOpenProfile} disabled={!user || !onOpenProfile} aria-label="Open profile" aria-haspopup="dialog"><span className={styles.avatar}>{initials}</span><span className={styles.profileCopy}><span className={styles.profileName}>{user?.name ?? "Your workspace"}</span><span>Personal workspace</span></span><Icon name="chevron" size={16} /></button></div>
   </aside>;
 }

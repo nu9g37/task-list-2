@@ -1,0 +1,13 @@
+.photo { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 22px; }
+.avatar { display: grid; place-items: center; width: 112px; height: 112px; flex-shrink: 0; overflow: hidden; border-radius: 50%; background: #dcedc6; color: var(--green); font-size: 36px; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.changeImage { border: 1px solid var(--border); border-radius: 8px; background: white; color: var(--green); padding: 7px 16px; font: inherit; font-size: 12px; cursor: pointer; }
+.changeImage:hover { background: var(--sidebar); }
+.changeImage:disabled { opacity: .55; cursor: wait; }
+.imageHint { color: var(--muted); font-size: 11px; }
+.password { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 18px 0; margin-bottom: 19px; }
+.password h3 { margin: 0 0 8px; font-size: 14px; }
+.passwordActions { border-top: 0; padding-top: 0; }
+.passwordActions .passwordButton { background: #1676b8; }
+.passwordActions .passwordButton:hover { background: #105e96; }
+.success { color: var(--green); font-size: 12px; }

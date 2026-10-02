@@ -30,11 +30,15 @@
 .addProject { height: 36px; padding: 0 10px 0 28px; }
 .sidebarFooter { margin-top: auto; padding-top: 24px; flex-shrink: 0; }
 .help { padding: 0; height: 24px; margin-bottom: 26px; }
-.profile { border-top: 1px solid var(--border); padding-top: 22px; display: flex; align-items: center; gap: 10px; }
-.avatar { width: 36px; height: 36px; border-radius: 12px; background: #dcedc6; color: var(--green); display: grid; place-items: center; font-size: 12px; }
-.profile > div { flex: 1; }
-.profile p { margin: 0; font-weight: 500; line-height: 20px; }
-.profile > div > span { display: block; font-size: 12px; line-height: 16px; color: var(--muted); }
+.profile { width: 100%; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; border-top: 1px solid var(--border); padding-top: 22px; display: flex; align-items: center; gap: 10px; }
+.avatar { width: 36px; height: 36px; flex-shrink: 0; overflow: hidden; border-radius: 50%; background: #dcedc6; color: var(--green); display: grid; place-items: center; font-size: 12px; }
+.profileCopy { flex: 1; min-width: 0; }
+.profile:disabled { cursor: default; opacity: .6; }
+.profile:focus-visible { outline: 2px solid var(--green); outline-offset: 4px; }
+.profile:hover .avatar { background: #cde3b0; }
+.mobileProfile { display: none; }
+.profileName { margin: 0; font-weight: 500; line-height: 20px; }
+.profileCopy > span:last-child { display: block; font-size: 12px; line-height: 16px; color: var(--muted); }
 .profile > svg { color: var(--muted); }
 .workspace { display: flex; flex-direction: column; flex: 1; height: 100%; min-width: 0; min-height: 0; overflow: hidden; }
 .header { flex-shrink: 0; }
@@ -78,7 +82,7 @@
 .projectNavItem > span:nth-child(2) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .projectNavItem { min-width: 0; }
 .projectCount { flex-shrink: 0; }
-.profile p { overflow-wrap: anywhere; }
+.profileName { overflow-wrap: anywhere; }
 .upcomingCard h3 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .taskPanelHeader { padding: 19px 22px 17px 24px; }
 .taskToolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -177,6 +181,10 @@
   .navItem { gap: 6px; padding: 0 8px; font-size: 12px; }
   .navItem > span { text-align: left; }
   .projectNavigation, .sidebarFooter { display: none; }
+  .mobileProfile { display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: 8px; background: white; color: var(--green); padding: 8px; font-size: 12px; cursor: pointer; }
+  .breadcrumb > span:first-child, .breadcrumb > svg { display: none; }
+  .breadcrumb { min-width: 0; }
+  .breadcrumb > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .header { height: 60px; padding-inline: 20px; gap: 12px; }
   .breadcrumb { gap: 10px; }
   .headerActions { gap: 12px; }
