@@ -23,6 +23,6 @@ export function AppSidebar({ user, projects, onAddProject, activeProjectId, onOp
         <button type="button" disabled={!onAddProject || !user} className={styles.addProject} onClick={onAddProject}><Icon name="plus" size={16} />Add project</button>
       </div>
     </nav>
-    <div className={styles.sidebarFooter}><button type="button" disabled className={styles.help}><Icon name="help" size={18} />Help &amp; shortcuts</button><button type="button" className={styles.profile} onClick={onOpenProfile} disabled={!user || !onOpenProfile} aria-label="Open profile" aria-haspopup="dialog"><span className={styles.avatar}>{initials}</span><span className={styles.profileCopy}><span className={styles.profileName}>{user?.name ?? "Your workspace"}</span><span>Personal workspace</span></span><Icon name="chevron" size={16} /></button></div>
+    {/* <div className={styles.sidebarFooter}><button type="button" disabled className={styles.help}><Icon name="help" size={18} />Help &amp; shortcuts</button><button type="button" className={styles.profile} onClick={onOpenProfile} disabled={!user || !onOpenProfile} aria-label="Open profile" aria-haspopup="dialog"><span className={styles.avatar}>{initials}</span><span className={styles.profileCopy}><span className={styles.profileName}>{user?.name ?? "Your workspace"}</span><span>Personal workspace</span></span><Icon name="chevron" size={16} /></button></div> */}
   </aside>;
 }
