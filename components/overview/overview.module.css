@@ -180,8 +180,8 @@
   .header { height: 60px; padding-inline: 20px; gap: 12px; }
   .breadcrumb { gap: 10px; }
   .headerActions { gap: 12px; }
-  .search { width: 36px; padding: 10px; }
-  .search input { display: none; }
+  .search { width: clamp(120px, 36vw, 220px); padding: 0 10px; }
+  .search input { display: block; }
   .main { padding: 24px 20px 32px; }
   .greeting { margin-bottom: 24px; }
   .greeting h1 { font-size: 28px; }

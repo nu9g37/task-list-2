@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWorkspace } from "@/components/layout/workspace-layout";
+import { searchOverview } from "@/components/tasks/task-search";
 import { Icon } from "@/components/ui/icon";
 import { FocusPanel } from "./focus-panel";
 import { ProjectCards } from "./project-cards";
@@ -17,7 +18,7 @@ type LoadState = { kind: "loading" } | { kind: "ready"; data: OverviewData } | {
 
 export function OverviewScreen({ projectId }: { projectId?: string }) {
   const router = useRouter();
-  const { revision, publish } = useWorkspace();
+  const { revision, publish, search } = useWorkspace();
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
   const [taskFormOpen, setTaskFormOpen] = useState(false);
@@ -82,6 +83,8 @@ export function OverviewScreen({ projectId }: { projectId?: string }) {
     }
   }
 
+  const visibleData = state.kind === "ready" ? searchOverview(state.data, search) : undefined;
+
   return (
     <>
       {state.kind === "loading" ? <section className={styles.loadState} role="status" aria-live="polite">
@@ -99,8 +102,8 @@ export function OverviewScreen({ projectId }: { projectId?: string }) {
             <button type="button" className={styles.primaryButton} onClick={createTask}><Icon name="plus" size={14} />New task</button>
           </div>
         </section>
-        <SummaryCards data={state.data} />
-        <div className={styles.contentGrid}><TaskList tasks={state.data.tasks} onAddTask={createTask} onStatusChange={changeTaskStatus} onEditTask={editTask} onDeleteTask={setDeletingTask} /><FocusPanel data={state.data} /></div>
+        <SummaryCards data={visibleData!} />
+        <div className={styles.contentGrid}><TaskList tasks={visibleData!.tasks} searching={!!search.trim()} onAddTask={createTask} onStatusChange={changeTaskStatus} onEditTask={editTask} onDeleteTask={setDeletingTask} /><FocusPanel data={visibleData!} /></div>
         {!projectId && <ProjectCards projects={state.data.projects} />}
         {taskFormOpen && <TaskForm open projects={state.data.projects} task={editingTask} defaultProjectId={projectId} onClose={() => setTaskFormOpen(false)} onCreated={refreshTasks} />}
         {deletingTask && <DeleteTaskDialog task={deletingTask} onClose={() => setDeletingTask(undefined)} onDeleted={refreshTasks} />}

@@ -99,7 +99,7 @@ export function buildOverview(user: OverviewUser, overview: OverviewResponse, pr
   const nextLabel = !next ? null : nextDate === date ? "Today" : nextDate === shiftDate(date, 1) ? "Tomorrow" : new Intl.DateTimeFormat("en-US", { timeZone: timezone, month: "short", day: "numeric" }).format(new Date(next.dueAt!));
   const hour = Number(new Intl.DateTimeFormat("en-US", { timeZone: timezone, hour: "numeric", hourCycle: "h23" }).format(new Date(overview.asOf)));
   return {
-    user, timezone, date, summary: overview.summary, projects: projectViews, currentProject: undefined as ApiProject | undefined, tasks: taskViews, todayTasks: taskViews.filter((task) => task.dueToday),
+    user, timezone, date, asOf: overview.asOf, summary: overview.summary, projects: projectViews, currentProject: undefined as ApiProject | undefined, tasks: taskViews, todayTasks: taskViews.filter((task) => task.dueToday),
     greeting: hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening",
     displayDate: new Intl.DateTimeFormat("en-US", { timeZone: timezone, weekday: "short", month: "short", day: "numeric", year: "numeric" }).format(new Date(overview.asOf)),
     completedThisWeek, weekDifference, upcomingCount,

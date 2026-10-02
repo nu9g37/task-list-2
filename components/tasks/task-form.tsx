@@ -7,6 +7,7 @@ import styles from "./task-form.module.css";
 
 interface TaskFormProps {
   defaultProjectId?: string;
+  defaultDate?: string;
   task?: ApiTask;
   open: boolean;
   projects: OverviewProject[];
@@ -14,14 +15,14 @@ interface TaskFormProps {
   onCreated: () => void;
 }
 
-export function TaskForm({ open, projects, onClose, onCreated, task, defaultProjectId }: TaskFormProps) {
+export function TaskForm({ open, projects, onClose, onCreated, task, defaultProjectId, defaultDate }: TaskFormProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const originalDue = task?.dueAt ? new Date(task.dueAt) : null;
   const localDue = originalDue ? new Date(originalDue.getTime() - originalDue.getTimezoneOffset() * 60000).toISOString() : "";
-  const initialDate = localDue.slice(0, 10);
+  const initialDate = task ? localDue.slice(0, 10) : defaultDate ?? "";
   const initialTime = localDue.slice(11, 16) || "09:00";
 
   useEffect(() => {

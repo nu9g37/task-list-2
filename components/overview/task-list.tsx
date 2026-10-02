@@ -47,7 +47,7 @@ function TaskRow({ task, pending, checked, onToggle, onEdit, onDelete }: { task:
     </div>
   </li>;
 }
-export function TaskList({ tasks, onAddTask, onStatusChange, onEditTask, onDeleteTask }: { tasks: OverviewTask[]; onAddTask: () => void; onStatusChange: (id: string, completed: boolean) => Promise<void>; onEditTask: (task: OverviewTask) => void; onDeleteTask: (task: OverviewTask) => void }) {
+export function TaskList({ tasks, searching = false, onAddTask, onStatusChange, onEditTask, onDeleteTask }: { tasks: OverviewTask[]; searching?: boolean; onAddTask: () => void; onStatusChange: (id: string, completed: boolean) => Promise<void>; onEditTask: (task: OverviewTask) => void; onDeleteTask: (task: OverviewTask) => void }) {
   const [activeTab, setActiveTab] = useState<"all" | "today" | "done">("all");
   const [updating, setUpdating] = useState<{ id: string; completed: boolean } | null>(null);
   const [error, setError] = useState("");
@@ -66,7 +66,7 @@ export function TaskList({ tasks, onAddTask, onStatusChange, onEditTask, onDelet
   }
   const tabs = [{ id: "all", label: "All tasks" }, { id: "today", label: "Today's tasks" }, { id: "done", label: "Done" }] as const;
   const visibleTasks = tasks.filter((task) => activeTab === "all" || (activeTab === "today" ? task.dueToday : task.completed));
-  const emptyMessage = activeTab === "today" ? "No tasks due today. Enjoy a little breathing room." : activeTab === "done" ? "No completed tasks yet. One small step at a time." : "No tasks yet. Add your first task to get started.";
+  const emptyMessage = searching ? "No tasks match your search in this view." : activeTab === "today" ? "No tasks due today. Enjoy a little breathing room." : activeTab === "done" ? "No completed tasks yet. One small step at a time." : "No tasks yet. Add your first task to get started.";
 
   return <section className={styles.taskPanel} aria-labelledby="tasks-heading">
     <div className={styles.taskPanelHeader}>

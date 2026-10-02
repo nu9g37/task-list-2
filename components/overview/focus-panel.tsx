@@ -18,7 +18,7 @@ export function FocusPanel({ data }: { data: OverviewData }) {
         <div className={styles.upcomingLabel}><span className={styles.dot} /><h2 id="upcoming-heading">COMING UP</h2></div>
         {upcoming ? <>
           <h3>{upcoming.title}</h3><p>{upcoming.project}</p>
-          <div className={styles.upcomingFooter}><span><Icon name="calendar" size={14} />{upcoming.label}</span><Icon name="arrow" size={16} /></div>
+          <div className={styles.upcomingFooter}><span><Icon name="calendar" size={14} />{upcoming.label}</span></div>
         </> : <p className={styles.noUpcoming}>No upcoming deadlines.</p>}
       </section>
     </div>
