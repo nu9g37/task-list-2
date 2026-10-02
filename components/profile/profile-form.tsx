@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { authClient } from "@/lib/auth-client";
+import { isValidTimezone, timezoneOptions } from "@/lib/timezone";
 import type { OverviewUser } from "@/components/overview/overview-data";
 import styles from "@/components/tasks/task-form.module.css";
 import profileStyles from "./profile.module.css";
@@ -14,13 +15,16 @@ export function ProfileForm({ user, onClose, onSaved }: { user: OverviewUser; on
   const fileRef = useRef<HTMLInputElement>(null);
   const readingRef = useRef(false);
   const [saving, setSaving] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const [error, setError] = useState("");
   const [image, setImage] = useState(user.image ?? "");
   const [failedImage, setFailedImage] = useState<string>();
   const [passwordBusy, setPasswordBusy] = useState(false);
   const [readingImage, setReadingImage] = useState(false);
   const [imageError, setImageError] = useState("");
-  const busy = saving || passwordBusy || readingImage;
+  const [timezone, setTimezone] = useState(isValidTimezone(user.timezone) ? user.timezone : "UTC");
+  const [zones] = useState(() => timezoneOptions(user.timezone));
+  const busy = saving || loggingOut || passwordBusy || readingImage;
   const initials = user.name.trim().split(/\s+/).slice(0, 2).map((part) => Array.from(part)[0]).join("").toUpperCase();
 
   useEffect(() => {
@@ -30,6 +34,26 @@ export function ProfileForm({ user, onClose, onSaved }: { user: OverviewUser; on
 
   function close() {
     if (!savingRef.current && !readingRef.current) onClose();
+  }
+
+  async function logout() {
+    if (savingRef.current || readingRef.current) return;
+    savingRef.current = true;
+    setLoggingOut(true);
+    setError("");
+    try {
+      const result = await authClient.signOut();
+      if (result.error) {
+        setError(result.error.message || "Could not log out. Please try again.");
+      } else {
+        window.location.replace("/sign-in");
+        return;
+      }
+    } catch {
+      setError("Could not connect. Check your connection and try again.");
+    }
+    savingRef.current = false;
+    setLoggingOut(false);
   }
 
   async function changeImage(file?: File) {
@@ -53,17 +77,18 @@ export function ProfileForm({ user, onClose, onSaved }: { user: OverviewUser; on
     if (savingRef.current || readingRef.current) return;
     const name = String(new FormData(event.currentTarget).get("name") ?? "").trim();
     if (!name) { setError("Please enter your name."); return; }
+    if (!isValidTimezone(timezone)) { setError("Please select a valid timezone."); return; }
     const imageUrl = image.trim();
     savingRef.current = true;
     setSaving(true);
     setError("");
     try {
-      const result = await authClient.updateUser({ name, image: imageUrl || null });
+      const result = await authClient.updateUser({ name, image: imageUrl || null, timezone });
       if (result.error) {
         setError(result.error.status === 401 ? "Your session has ended. Please sign in again." : result.error.message || "Could not save your profile. Please try again.");
         return;
       }
-      onSaved({ ...user, name, image: imageUrl || null });
+      onSaved({ ...user, name, image: imageUrl || null, timezone });
       onClose();
     } catch {
       setError("Could not connect. Check your connection and try again.");
@@ -95,9 +120,19 @@ export function ProfileForm({ user, onClose, onSaved }: { user: OverviewUser; on
         </fieldset>
         <PasswordForm disabled={busy} onBusy={(value) => { savingRef.current = value; setPasswordBusy(value); }} />
         <fieldset disabled={busy}>
-          <div className={styles.field}><label htmlFor="profile-timezone">Timezone <small>Read only</small></label><input id="profile-timezone" value={user.timezone} readOnly /></div>
+          <div className={styles.field}>
+            <label htmlFor="profile-timezone">Timezone</label>
+            <select form="profile-details" id="profile-timezone" name="timezone" value={timezone} onChange={(event) => setTimezone(event.target.value)} aria-describedby="timezone-hint" required>
+              {zones.map((zone) => <option key={zone.value} value={zone.value}>{zone.label}</option>)}
+            </select>
+            <small id="timezone-hint">UTC offsets shown are current. Daylight saving adjusts automatically.</small>
+          </div>
           {error && <p role="alert" className={styles.error}>{error}</p>}
-          <div className={styles.footer}><button type="button" className={styles.cancel} onClick={close}>Cancel</button><button form="profile-details" type="submit" className={styles.submit}>{saving ? "Saving…" : "Save changes"}</button></div>
+          <div className={`${styles.footer} ${profileStyles.footer}`}>
+            <button type="button" className={profileStyles.logout} onClick={logout}>{loggingOut ? "Logging out…" : "Logout"}</button>
+            <button type="button" className={styles.cancel} onClick={close}>Cancel</button>
+            <button form="profile-details" type="submit" className={styles.submit}>{saving ? "Saving…" : "Save changes"}</button>
+          </div>
         </fieldset>
     </div>
   </dialog>;

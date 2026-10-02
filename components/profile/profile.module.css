@@ -11,3 +11,6 @@
 .passwordActions .passwordButton { background: #1676b8; }
 .passwordActions .passwordButton:hover { background: #105e96; }
 .success { color: var(--green); font-size: 12px; }
+.logout { margin-right: auto; border: 1px solid #e7c4be; background: white; color: #a63f32; }
+.logout:hover { background: #fff3f0; }
+@media (max-width: 380px) { .footer { gap: 8px; } .footer button { padding-inline: 10px; } }

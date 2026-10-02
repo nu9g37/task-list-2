@@ -3,6 +3,7 @@ import "server-only";
 import { betterAuth } from "better-auth";
 import { getDb } from "@/db";
 import { requireEnv } from "./env";
+import { timezoneValidator } from "./timezone";
 
 function createAuth() {
   return betterAuth({
@@ -20,6 +21,8 @@ function createAuth() {
           type: "string",
           required: false,
           defaultValue: "UTC",
+          input: true,
+          validator: { input: timezoneValidator },
         },
       },
     },

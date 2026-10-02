@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { getDeviceTimezone } from "@/lib/timezone";
 import { Icon } from "@/components/ui/icon";
 import styles from "./auth.module.css";
 
@@ -24,7 +25,7 @@ export function AuthScreen({ mode }: { mode: "sign-in" | "sign-up" }) {
     const password = String(data.get("password"));
     try {
       const result = signingUp
-        ? await authClient.signUp.email({ name: String(data.get("name")).trim(), email, password })
+        ? await authClient.signUp.email({ name: String(data.get("name")).trim(), email, password, timezone: getDeviceTimezone() })
         : await authClient.signIn.email({ email, password, rememberMe: data.get("remember") === "on" });
       if (result.error) {
         setError(result.error.status === 503

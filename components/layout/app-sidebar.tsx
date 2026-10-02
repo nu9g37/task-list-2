@@ -10,6 +10,8 @@ import styles from "@/components/overview/overview.module.css";
 
 export function AppSidebar({ user, projects, onAddProject, activeProjectId, onOpenProfile, onClose }: { user?: OverviewUser; projects: OverviewProject[]; onAddProject?: () => void; activeProjectId?: string; onOpenProfile?: () => void; onClose?: () => void }) {
   const [projectsOpen, setProjectsOpen] = useState(true);
+  const [failedImage, setFailedImage] = useState<string>();
+  const image = user?.image?.trim();
   const calendarActive = usePathname() === "/calendar";
   const projectListId = useId();
   const initials = user?.name.trim().split(/\s+/).slice(0, 2).map((part) => Array.from(part)[0]).join("").toUpperCase() || "—";
@@ -24,6 +26,13 @@ export function AppSidebar({ user, projects, onAddProject, activeProjectId, onOp
         <button type="button" disabled={!onAddProject || !user} className={styles.addProject} onClick={onAddProject}><Icon name="plus" size={16} />Add project</button>
       </div>
     </nav>
-    <div className={styles.sidebarFooter}><button type="button" className={styles.profile} onClick={onOpenProfile} disabled={!user || !onOpenProfile} aria-label="Open profile" aria-haspopup="dialog"><span className={styles.avatar}>{initials}</span><span className={styles.profileCopy}><span className={styles.profileName}>{user?.name ?? "Your workspace"}</span><span>Personal workspace</span></span><Icon name="chevron" size={16} /></button></div>
+    <div className={styles.sidebarFooter}><button type="button" className={styles.profile} onClick={onOpenProfile} disabled={!user || !onOpenProfile} aria-label="Open profile" aria-haspopup="dialog">
+      <span className={styles.avatar}>
+        {/* Uploaded avatars and existing URLs do not need the image optimization proxy. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {image && failedImage !== image ? <img key={image} src={image} alt="" referrerPolicy="no-referrer" onError={() => setFailedImage(image)} /> : initials}
+      </span>
+      <span className={styles.profileCopy}><span className={styles.profileName}>{user?.name ?? "Your workspace"}</span><span>Personal workspace</span></span><Icon name="chevron" size={16} />
+    </button></div>
   </aside>;
 }
