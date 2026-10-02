@@ -20,7 +20,7 @@ export interface ApiTask {
   position: number;
 }
 
-interface ApiProject { id: string; name: string; color: string }
+interface ApiProject { id: string; name: string; color: string; description?: string | null }
 export interface OverviewResponse {
   timezone: string;
   date: string;

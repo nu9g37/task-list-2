@@ -26,6 +26,19 @@
 .projectNavItem { display: flex; align-items: center; gap: 10px; border: 0; background: transparent; padding: 0 10px 0 28px; height: 40px; text-align: left; }
 .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .projectCount { margin-left: auto; color: var(--muted); font-size: 12px; }
+.projectNavRow { display: flex; align-items: center; min-width: 0; border-radius: 8px; }
+.projectNavRow:hover, .projectNavRow:focus-within { background: var(--green-soft); }
+.projectNavRow .projectNavItem { flex: 1; min-width: 0; padding-right: 4px; }
+.projectNavName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.projectNavActions { display: grid; place-items: center; width: 28px; height: 28px; margin-right: 6px; flex-shrink: 0; }
+.projectNavActions > * { grid-area: 1 / 1; }
+.projectNavActions .projectCount { margin: 0; }
+.projectMenuTrigger { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--muted); opacity: 0; cursor: pointer; }
+.projectNavRow:hover .projectMenuTrigger, .projectNavRow:focus-within .projectMenuTrigger, .projectNavRow:has(:popover-open) .projectMenuTrigger { opacity: 1; }
+.projectNavRow:hover .projectCount, .projectNavRow:focus-within .projectCount, .projectNavRow:has(:popover-open) .projectCount { visibility: hidden; }
+.projectMenuTrigger:hover { background: var(--border); color: var(--green); }
+.projectMenuTrigger:focus-visible { outline: 2px solid var(--green); outline-offset: 1px; }
+@media (hover: none) { .projectMenuTrigger { opacity: 1; } .projectNavActions .projectCount { visibility: hidden; } }
 .addProject, .help { display: flex; gap: 8px; align-items: center; border: 0; background: transparent; font-size: 12px; color: var(--muted); }
 .addProject { height: 36px; padding: 0 10px 0 28px; }
 .sidebarFooter { margin-top: auto; padding-top: 24px; flex-shrink: 0; }

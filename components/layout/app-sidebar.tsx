@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 import Link from "next/link";
+import { ProjectNavItem } from "@/components/projects/project-nav-item";
 import { usePathname } from "next/navigation";
 import { Icon } from "@/components/ui/icon";
 import type { OverviewProject, OverviewUser } from "@/components/overview/overview-data";
@@ -19,7 +20,7 @@ export function AppSidebar({ user, projects, onAddProject, activeProjectId, onOp
       <Link href="/calendar" className={`${styles.navItem} ${calendarActive ? styles.navActive : ""}`} aria-current={calendarActive ? "page" : undefined}><Icon name="calendar" size={20} /><span>Calendar</span></Link>
       <button type="button" className={`${styles.navItem} ${styles.projectToggle} ${projectsOpen ? "" : styles.projectCollapsed}`} aria-expanded={projectsOpen} aria-controls={projectListId} onClick={() => setProjectsOpen((value) => !value)}><Icon name="folder" size={20} /><span>Project</span><Icon name="chevron" size={14} /></button>
       <div id={projectListId} className={styles.projectNavigation} hidden={!projectsOpen}>
-        {projects.map((project) => <Link key={project.id} href={`/projects/${encodeURIComponent(project.id)}`} className={`${styles.projectNavItem} ${activeProjectId === project.id ? styles.navActive : ""}`} aria-current={activeProjectId === project.id ? "page" : undefined}><span className={styles.dot} style={{ background: project.color }} /><span>{project.name}</span><span className={styles.projectCount}>{project.tasks}</span></Link>)}
+        {projects.map((project) => <ProjectNavItem key={project.id} project={project} active={activeProjectId === project.id} />)}
         <button type="button" disabled={!onAddProject || !user} className={styles.addProject} onClick={onAddProject}><Icon name="plus" size={16} />Add project</button>
       </div>
     </nav>
