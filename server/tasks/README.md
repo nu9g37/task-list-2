@@ -4,12 +4,12 @@ All routes use the Better Auth session cookie and only access the signed-in user
 Mutations also require an `Origin` header matching `BETTER_AUTH_URL` (including in Postman).
 POST/PATCH require `Content-Type: application/json`.
 
-| Method | Route | Successful response |
-| --- | --- | --- |
-| GET | `/api/tasks` | 200 `{ "tasks": [...] }` |
-| POST | `/api/tasks` | 201 `{ "task": {...} }` |
-| GET | `/api/tasks/:id` | 200 `{ "task": {...} }` |
-| PATCH | `/api/tasks/:id` | 200 `{ "task": {...} }` |
+| Method | Route            | Successful response                              |
+| ------ | ---------------- | ------------------------------------------------ |
+| GET    | `/api/tasks`     | 200 `{ "tasks": [...] }`                         |
+| POST   | `/api/tasks`     | 201 `{ "task": {...} }`                          |
+| GET    | `/api/tasks/:id` | 200 `{ "task": {...} }`                          |
+| PATCH  | `/api/tasks/:id` | 200 `{ "task": {...} }`                          |
 | DELETE | `/api/tasks/:id` | 200 `{ "message": "Task deleted successfully" }` |
 
 ## Create and update
@@ -50,17 +50,17 @@ DELETE permanently removes the task.
 
 Filters combine with AND. Results sort by `position`, then `id`.
 
-| Query parameter | Meaning |
-| --- | --- |
-| `projectId=<id>` | Tasks in that project |
-| `projectId=null` | Personal tasks |
-| `status=TODO` | One of the three statuses |
-| `priority=HIGH` | One of the three priorities |
-| `dueFrom=<ISO datetime>` | Inclusive deadline lower bound |
-| `dueTo=<ISO datetime>` | Exclusive deadline upper bound |
-| `archived=false` | Default: personal tasks and tasks in active projects |
-| `archived=true` | Only tasks in archived projects |
-| `archived=all` | All of the user's tasks |
+| Query parameter          | Meaning                                              |
+| ------------------------ | ---------------------------------------------------- |
+| `projectId=<id>`         | Tasks in that project                                |
+| `projectId=null`         | Personal tasks                                       |
+| `status=TODO`            | One of the three statuses                            |
+| `priority=HIGH`          | One of the three priorities                          |
+| `dueFrom=<ISO datetime>` | Inclusive deadline lower bound                       |
+| `dueTo=<ISO datetime>`   | Exclusive deadline upper bound                       |
+| `archived=false`         | Default: personal tasks and tasks in active projects |
+| `archived=true`          | Only tasks in archived projects                      |
+| `archived=all`           | All of the user's tasks                              |
 
 URL-encode datetime query values, especially `+` in timezone offsets. Use
 `URLSearchParams` when constructing calendar queries. Unscheduled tasks are excluded

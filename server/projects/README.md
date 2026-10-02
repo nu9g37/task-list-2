@@ -2,13 +2,13 @@
 
 ทุกเส้นต้องมี session cookie จาก Better Auth สำหรับ POST / PATCH / DELETE ให้ส่ง `Origin` ตรงกับ `BETTER_AUTH_URL` และ body JSON ต้องมี `Content-Type: application/json`
 
-| Method | Path | ผลลัพธ์ |
-| --- | --- | --- |
-| GET | `/api/projects` | `200 { projects: [...] }`; ค่าเริ่มต้นแสดงเฉพาะที่ยังไม่ Archive |
-| POST | `/api/projects` | `201 { project: {...} }` |
-| GET | `/api/projects/:id` | `200 { project: {...} }` |
-| PATCH | `/api/projects/:id` | `200 { project: {...} }` |
-| DELETE | `/api/projects/:id` | `200 { message: "Project deleted successfully" }` |
+| Method | Path                | ผลลัพธ์                                                          |
+| ------ | ------------------- | ---------------------------------------------------------------- |
+| GET    | `/api/projects`     | `200 { projects: [...] }`; ค่าเริ่มต้นแสดงเฉพาะที่ยังไม่ Archive |
+| POST   | `/api/projects`     | `201 { project: {...} }`                                         |
+| GET    | `/api/projects/:id` | `200 { project: {...} }`                                         |
+| PATCH  | `/api/projects/:id` | `200 { project: {...} }`                                         |
+| DELETE | `/api/projects/:id` | `200 { message: "Project deleted successfully" }`                |
 
 GET รายการใช้ `?archived=true` เพื่อดูเฉพาะ Archive หรือ `?archived=all` เพื่อดูทั้งหมด เรียงด้วย `position` แล้ว `id`
 

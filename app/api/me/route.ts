@@ -6,7 +6,9 @@ export const runtime = "nodejs";
 export async function GET(request: Request) {
   const headers = { "Cache-Control": "no-store" };
   try {
-    const session = await getAuth().api.getSession({ headers: request.headers });
+    const session = await getAuth().api.getSession({
+      headers: request.headers,
+    });
     if (!session) {
       return Response.json({ error: "Unauthorized" }, { status: 401, headers });
     }

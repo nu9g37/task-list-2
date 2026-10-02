@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "db:check": "node scripts/check-db.mjs"
   },
   "dependencies": {
@@ -25,6 +27,8 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.7",
+    "eslint-config-prettier": "10.1.8",
+    "prettier": "3.9.9",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

@@ -1,4 +1,7 @@
-import type { OverviewData, ApiTask } from "@/components/overview/overview-data";
+import type {
+  OverviewData,
+  ApiTask,
+} from "@/components/overview/overview-data";
 
 export function shiftDay(day: string, amount: number) {
   const date = new Date(`${day}T12:00:00Z`);
@@ -7,13 +10,22 @@ export function shiftDay(day: string, amount: number) {
 }
 
 export function localDay(value: string, timezone: string) {
-  const parts = new Intl.DateTimeFormat("en-US", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(value));
-  const part = (type: string) => parts.find((item) => item.type === type)!.value;
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date(value));
+  const part = (type: string) =>
+    parts.find((item) => item.type === type)!.value;
   return `${part("year")}-${part("month")}-${part("day")}`;
 }
 
 export function formatDay(day: string, options: Intl.DateTimeFormatOptions) {
-  return new Intl.DateTimeFormat("en-US", { ...options, timeZone: "UTC" }).format(new Date(`${day}T12:00:00Z`));
+  return new Intl.DateTimeFormat("en-US", {
+    ...options,
+    timeZone: "UTC",
+  }).format(new Date(`${day}T12:00:00Z`));
 }
 
 export function shiftMonth(month: string, amount: number) {
@@ -37,15 +49,35 @@ export function monthDays(month: string) {
   return days;
 }
 
-export interface CalendarTask { source: ApiTask; day: string; time: string; project: string; color: string }
+export interface CalendarTask {
+  source: ApiTask;
+  day: string;
+  time: string;
+  project: string;
+  color: string;
+}
 
 export function calendarTasks(data: OverviewData): CalendarTask[] {
-  const projects = new Map(data.projects.map((project) => [project.id, project]));
-  return data.tasks.map((task) => task.source).filter((task) => task.dueAt).sort((a, b) => new Date(a.dueAt!).getTime() - new Date(b.dueAt!).getTime()).map((task) => ({
-    source: task,
-    day: localDay(task.dueAt!, data.timezone),
-    time: new Intl.DateTimeFormat("en-US", { timeZone: data.timezone, hour: "numeric", minute: "2-digit" }).format(new Date(task.dueAt!)),
-    project: task.projectId ? projects.get(task.projectId)?.name ?? "Project" : "Personal tasks",
-    color: task.projectId ? projects.get(task.projectId)?.color ?? "#245C45" : "#245C45",
-  }));
+  const projects = new Map(
+    data.projects.map((project) => [project.id, project]),
+  );
+  return data.tasks
+    .map((task) => task.source)
+    .filter((task) => task.dueAt)
+    .sort((a, b) => new Date(a.dueAt!).getTime() - new Date(b.dueAt!).getTime())
+    .map((task) => ({
+      source: task,
+      day: localDay(task.dueAt!, data.timezone),
+      time: new Intl.DateTimeFormat("en-US", {
+        timeZone: data.timezone,
+        hour: "numeric",
+        minute: "2-digit",
+      }).format(new Date(task.dueAt!)),
+      project: task.projectId
+        ? (projects.get(task.projectId)?.name ?? "Project")
+        : "Personal tasks",
+      color: task.projectId
+        ? (projects.get(task.projectId)?.color ?? "#245C45")
+        : "#245C45",
+    }));
 }

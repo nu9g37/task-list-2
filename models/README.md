@@ -2,14 +2,14 @@
 
 TypeScript models สำหรับ PostgreSQL เริ่มพัฒนาในเครื่องแล้วจึงย้ายไป Neon / Vercel ติดตั้ง Better Auth และ `pg` แล้ว ใช้ PostgreSQL adapter โดยตรง และมี SQL migration ที่ `db/migrations/0001_initial.sql`
 
-| Model | ตารางที่เสนอ | หน้าที่ |
-| --- | --- | --- |
-| `User` | `user` | ผู้ใช้และโปรไฟล์ ใช้ `name`, `image`, `emailVerified` ตาม Better Auth |
-| `Session` | `session` | การล็อกอินของแต่ละอุปกรณ์และเวลาหมดอายุ |
-| `Account` | `account` | วิธีเข้าสู่ระบบและ password hash |
-| `Verification` | `verification` | ข้อมูลชั่วคราวของการยืนยันอีเมลและรีเซ็ตรหัสผ่าน |
-| `Project` | `projects` | โปรเจกต์ของผู้ใช้ |
-| `Task` | `tasks` | งานส่วนตัวหรืองานในโปรเจกต์ |
+| Model          | ตารางที่เสนอ   | หน้าที่                                                               |
+| -------------- | -------------- | --------------------------------------------------------------------- |
+| `User`         | `user`         | ผู้ใช้และโปรไฟล์ ใช้ `name`, `image`, `emailVerified` ตาม Better Auth |
+| `Session`      | `session`      | การล็อกอินของแต่ละอุปกรณ์และเวลาหมดอายุ                               |
+| `Account`      | `account`      | วิธีเข้าสู่ระบบและ password hash                                      |
+| `Verification` | `verification` | ข้อมูลชั่วคราวของการยืนยันอีเมลและรีเซ็ตรหัสผ่าน                      |
+| `Project`      | `projects`     | โปรเจกต์ของผู้ใช้                                                     |
+| `Task`         | `tasks`        | งานส่วนตัวหรืองานในโปรเจกต์                                           |
 
 ## ความสัมพันธ์
 

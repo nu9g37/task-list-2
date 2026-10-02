@@ -1,5 +1,15 @@
-import { apiError, json, readJsonObject, requireAppOrigin, requireUserId } from "@/server/api";
-import { deleteProject, getProject, updateProject } from "@/server/projects/service";
+import {
+  apiError,
+  json,
+  readJsonObject,
+  requireAppOrigin,
+  requireUserId,
+} from "@/server/api";
+import {
+  deleteProject,
+  getProject,
+  updateProject,
+} from "@/server/projects/service";
 import { parseProjectInput } from "@/server/projects/validation";
 
 export const runtime = "nodejs";

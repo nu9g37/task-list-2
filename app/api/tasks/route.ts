@@ -1,4 +1,10 @@
-import { apiError, json, readJsonObject, requireAppOrigin, requireUserId } from "@/server/api";
+import {
+  apiError,
+  json,
+  readJsonObject,
+  requireAppOrigin,
+  requireUserId,
+} from "@/server/api";
 import { createTask, listTasks } from "@/server/tasks/service";
 import { parseTaskFilters, parseTaskInput } from "@/server/tasks/validation";
 
@@ -17,7 +23,15 @@ export async function POST(request: Request) {
   try {
     const userId = await requireUserId(request);
     requireAppOrigin(request);
-    return json({ task: await createTask(userId, parseTaskInput(await readJsonObject(request))) }, 201);
+    return json(
+      {
+        task: await createTask(
+          userId,
+          parseTaskInput(await readJsonObject(request)),
+        ),
+      },
+      201,
+    );
   } catch (error) {
     return apiError(error);
   }

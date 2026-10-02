@@ -8,7 +8,11 @@ import { OverviewScreen } from "@/components/overview/overview-screen";
 
 export const metadata: Metadata = { title: "Project · Tasklist 2" };
 
-export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ProjectPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const session = await getAuth().api.getSession({ headers: await headers() });
   if (!session) redirect("/sign-in");
   const { id } = await params;

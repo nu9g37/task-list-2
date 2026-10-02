@@ -11,15 +11,80 @@ async function main() {
   if (!url || /YOUR_|CHANGE_ME/.test(url)) {
     throw new Error("CONFIGURATION_MISSING");
   }
-  const pool = new Pool({ connectionString: url, connectionTimeoutMillis: 5000 });
+  const pool = new Pool({
+    connectionString: url,
+    connectionTimeoutMillis: 5000,
+  });
   try {
     const required = {
-      user: ["id", "name", "email", "emailVerified", "image", "timezone", "createdAt", "updatedAt"],
-      session: ["id", "userId", "token", "expiresAt", "ipAddress", "userAgent", "createdAt", "updatedAt"],
-      account: ["id", "userId", "accountId", "providerId", "password", "accessToken", "refreshToken", "idToken", "accessTokenExpiresAt", "refreshTokenExpiresAt", "scope", "createdAt", "updatedAt"],
-      verification: ["id", "identifier", "value", "expiresAt", "createdAt", "updatedAt"],
-      projects: ["id", "userId", "name", "description", "color", "position", "archivedAt", "createdAt", "updatedAt"],
-      tasks: ["id", "userId", "projectId", "title", "description", "status", "priority", "dueAt", "completedAt", "position", "createdAt", "updatedAt"],
+      user: [
+        "id",
+        "name",
+        "email",
+        "emailVerified",
+        "image",
+        "timezone",
+        "createdAt",
+        "updatedAt",
+      ],
+      session: [
+        "id",
+        "userId",
+        "token",
+        "expiresAt",
+        "ipAddress",
+        "userAgent",
+        "createdAt",
+        "updatedAt",
+      ],
+      account: [
+        "id",
+        "userId",
+        "accountId",
+        "providerId",
+        "password",
+        "accessToken",
+        "refreshToken",
+        "idToken",
+        "accessTokenExpiresAt",
+        "refreshTokenExpiresAt",
+        "scope",
+        "createdAt",
+        "updatedAt",
+      ],
+      verification: [
+        "id",
+        "identifier",
+        "value",
+        "expiresAt",
+        "createdAt",
+        "updatedAt",
+      ],
+      projects: [
+        "id",
+        "userId",
+        "name",
+        "description",
+        "color",
+        "position",
+        "archivedAt",
+        "createdAt",
+        "updatedAt",
+      ],
+      tasks: [
+        "id",
+        "userId",
+        "projectId",
+        "title",
+        "description",
+        "status",
+        "priority",
+        "dueAt",
+        "completedAt",
+        "position",
+        "createdAt",
+        "updatedAt",
+      ],
     };
     const { rows } = await pool.query(
       "SELECT table_name, column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = ANY($1::text[])",
@@ -28,7 +93,11 @@ async function main() {
     const missing = [];
     for (const [table, columns] of Object.entries(required)) {
       for (const column of columns) {
-        if (!rows.some((row) => row.table_name === table && row.column_name === column)) {
+        if (
+          !rows.some(
+            (row) => row.table_name === table && row.column_name === column,
+          )
+        ) {
           missing.push(`${table}.${column}`);
         }
       }
@@ -38,13 +107,17 @@ async function main() {
       process.exitCode = 1;
       return;
     }
-    console.log("PostgreSQL connected. All six tables have the expected columns.");
+    console.log(
+      "PostgreSQL connected. All six tables have the expected columns.",
+    );
   } finally {
     await pool.end();
   }
 }
 
 main().catch(() => {
-  console.error("Database check failed. Check DATABASE_URL, PostgreSQL and the initial migration.");
+  console.error(
+    "Database check failed. Check DATABASE_URL, PostgreSQL and the initial migration.",
+  );
   process.exitCode = 1;
 });

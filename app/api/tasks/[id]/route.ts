@@ -1,4 +1,10 @@
-import { apiError, json, readJsonObject, requireAppOrigin, requireUserId } from "@/server/api";
+import {
+  apiError,
+  json,
+  readJsonObject,
+  requireAppOrigin,
+  requireUserId,
+} from "@/server/api";
 import { deleteTask, getTask, updateTask } from "@/server/tasks/service";
 import { parseTaskInput } from "@/server/tasks/validation";
 
@@ -20,7 +26,13 @@ export async function PATCH(request: Request, context: Context) {
     const userId = await requireUserId(request);
     requireAppOrigin(request);
     const { id } = await context.params;
-    return json({ task: await updateTask(userId, id, parseTaskInput(await readJsonObject(request), true)) });
+    return json({
+      task: await updateTask(
+        userId,
+        id,
+        parseTaskInput(await readJsonObject(request), true),
+      ),
+    });
   } catch (error) {
     return apiError(error);
   }

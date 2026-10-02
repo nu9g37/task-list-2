@@ -8,24 +8,47 @@ export interface ProjectInput {
   archived?: boolean;
 }
 
-export function parseProjectInput(body: Record<string, unknown>, update = false): ProjectInput {
-  const allowed = ["name", "description", "color", "position", ...(update ? ["archived"] : [])];
+export function parseProjectInput(
+  body: Record<string, unknown>,
+  update = false,
+): ProjectInput {
+  const allowed = [
+    "name",
+    "description",
+    "color",
+    "position",
+    ...(update ? ["archived"] : []),
+  ];
   if (Object.keys(body).some((key) => !allowed.includes(key))) {
     throw new ApiError(400, "Unsupported project field");
   }
-  if (update && Object.keys(body).length === 0) throw new ApiError(400, "No fields to update");
+  if (update && Object.keys(body).length === 0)
+    throw new ApiError(400, "No fields to update");
   const input: ProjectInput = {};
   if (!update || Object.hasOwn(body, "name")) {
-    if (typeof body.name !== "string" || !body.name.trim() || body.name.trim().length > 200) {
+    if (
+      typeof body.name !== "string" ||
+      !body.name.trim() ||
+      body.name.trim().length > 200
+    ) {
       throw new ApiError(400, "name must contain 1–200 characters");
     }
     input.name = body.name.trim();
   }
   if (Object.hasOwn(body, "description")) {
-    if (body.description !== null && (typeof body.description !== "string" || body.description.length > 10_000)) {
-      throw new ApiError(400, "description must be a string up to 10000 characters or null");
+    if (
+      body.description !== null &&
+      (typeof body.description !== "string" || body.description.length > 10_000)
+    ) {
+      throw new ApiError(
+        400,
+        "description must be a string up to 10000 characters or null",
+      );
     }
-    input.description = typeof body.description === "string" ? body.description.trim() || null : null;
+    input.description =
+      typeof body.description === "string"
+        ? body.description.trim() || null
+        : null;
   }
   if (Object.hasOwn(body, "color")) {
     if (typeof body.color !== "string" || !/^#[0-9a-f]{6}$/i.test(body.color)) {
@@ -34,19 +57,30 @@ export function parseProjectInput(body: Record<string, unknown>, update = false)
     input.color = body.color.toUpperCase();
   }
   if (Object.hasOwn(body, "position")) {
-    if (typeof body.position !== "number" || !Number.isInteger(body.position) || body.position < 0 || body.position > 2_147_483_647) {
-      throw new ApiError(400, "position must be a non-negative PostgreSQL integer");
+    if (
+      typeof body.position !== "number" ||
+      !Number.isInteger(body.position) ||
+      body.position < 0 ||
+      body.position > 2_147_483_647
+    ) {
+      throw new ApiError(
+        400,
+        "position must be a non-negative PostgreSQL integer",
+      );
     }
     input.position = body.position;
   }
   if (Object.hasOwn(body, "archived")) {
-    if (typeof body.archived !== "boolean") throw new ApiError(400, "archived must be a boolean");
+    if (typeof body.archived !== "boolean")
+      throw new ApiError(400, "archived must be a boolean");
     input.archived = body.archived;
   }
   return input;
 }
 
-export function parseArchiveFilter(request: Request): "active" | "archived" | "all" {
+export function parseArchiveFilter(
+  request: Request,
+): "active" | "archived" | "all" {
   const value = new URL(request.url).searchParams.get("archived") ?? "false";
   if (value === "false") return "active";
   if (value === "true") return "archived";

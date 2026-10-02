@@ -47,13 +47,13 @@ npm run dev
 
 ใช้ Postman หรือ REST client ตัวเดียวกันเพื่อให้เก็บ cookie ต่อเนื่อง เปิดฐาน URL ตาม `BETTER_AUTH_URL` (ค่าเริ่มต้น `http://localhost:3000`)
 
-| Method / path | ใช้งาน |
-| --- | --- |
-| `GET /api/health` | ต้องได้ `status: "ok"`, `database: "connected"` |
-| `POST /api/auth/sign-up/email` | สมัครด้วย JSON: `name`, `email`, `password` |
-| `POST /api/auth/sign-in/email` | ล็อกอินด้วย JSON: `email`, `password` |
-| `GET /api/me` | ต้องได้ข้อมูลผู้ใช้เมื่อมี cookie; ไม่มี session ต้องได้ 401 |
-| `POST /api/auth/sign-out` | ล็อกเอาต์ แล้วตรวจว่า `/api/me` กลับเป็น 401 |
+| Method / path                  | ใช้งาน                                                       |
+| ------------------------------ | ------------------------------------------------------------ |
+| `GET /api/health`              | ต้องได้ `status: "ok"`, `database: "connected"`              |
+| `POST /api/auth/sign-up/email` | สมัครด้วย JSON: `name`, `email`, `password`                  |
+| `POST /api/auth/sign-in/email` | ล็อกอินด้วย JSON: `email`, `password`                        |
+| `GET /api/me`                  | ต้องได้ข้อมูลผู้ใช้เมื่อมี cookie; ไม่มี session ต้องได้ 401 |
+| `POST /api/auth/sign-out`      | ล็อกเอาต์ แล้วตรวจว่า `/api/me` กลับเป็น 401                 |
 
 POST ใช้ `Content-Type: application/json` และ `Origin` ตรงกับ `BETTER_AUTH_URL` เลือกรหัสผ่านทดสอบอย่างน้อย 8 ตัวอักษร ไม่เพิ่ม user หรือ password hash ผ่าน SQL ด้วยมือ ให้ Better Auth จัดการ
 
