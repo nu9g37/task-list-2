@@ -39,15 +39,22 @@ export function TaskList({
     index: number;
   } | null>(null);
   const busy = !!updating || order !== null;
-  const canReorder = activeTab === "all" && !searching && tasks.length > 1;
+  const unfinishedTasks = tasks.filter((task) => !task.completed);
+  const canReorder =
+    activeTab === "all" && !searching && unfinishedTasks.length > 1;
 
   async function move(id: string, index: number) {
     if (!canReorder || busy || saving.current) return;
-    const ids = tasks.map((task) => task.id);
-    const from = ids.indexOf(id);
+    const unfinishedIds = unfinishedTasks.map((task) => task.id);
+    const from = unfinishedIds.indexOf(id);
     if (from < 0 || from === index) return;
-    ids.splice(from, 1);
-    ids.splice(index, 0, id);
+    unfinishedIds.splice(from, 1);
+    unfinishedIds.splice(index, 0, id);
+    // The API requires all task IDs; keep hidden completed tasks in their slots.
+    let next = 0;
+    const ids = tasks.map((task) =>
+      task.completed ? task.id : unfinishedIds[next++],
+    );
     saving.current = true;
     setOrder(ids);
     setError("");
@@ -97,10 +104,12 @@ export function TaskList({
   const orderedTasks = order
     ? order.flatMap((id) => tasks.filter((task) => task.id === id))
     : tasks;
-  const visibleTasks = orderedTasks.filter(
-    (task) =>
-      activeTab === "all" ||
-      (activeTab === "today" ? task.dueToday : task.completed),
+  const visibleTasks = orderedTasks.filter((task) =>
+    activeTab === "all"
+      ? !task.completed
+      : activeTab === "today"
+        ? task.dueToday
+        : task.completed,
   );
   const emptyMessage = searching
     ? "No tasks match your search in this view."
@@ -108,7 +117,7 @@ export function TaskList({
       ? "No tasks due today. Enjoy a little breathing room."
       : activeTab === "done"
         ? "No completed tasks yet. One small step at a time."
-        : "No tasks yet. Add your first task to get started.";
+        : "No unfinished tasks. Add a new task to get started.";
 
   return (
     <section className={styles.taskPanel} aria-labelledby="tasks-heading">
@@ -169,7 +178,9 @@ export function TaskList({
                   ? dragging.id === task.id
                     ? styles.taskDragSource
                     : dragging.index === index
-                      ? tasks.findIndex((row) => row.id === dragging.id) < index
+                      ? visibleTasks.findIndex(
+                          (row) => row.id === dragging.id,
+                        ) < index
                         ? styles.taskDropAfter
                         : styles.taskDropBefore
                       : ""
@@ -242,7 +253,7 @@ export function TaskList({
                           Math.max(
                             0,
                             Math.min(
-                              tasks.length - 1,
+                              visibleTasks.length - 1,
                               index + (event.key === "ArrowUp" ? -1 : 1),
                             ),
                           ),

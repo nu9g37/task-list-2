@@ -21,7 +21,8 @@ focus and upcoming deadline. Sidebar project counts continue to cover all projec
 Creating a task defaults to the currently selected project.
 
 - The Tasks today card uses the Overview API's unfinished count.
-- The Task panel defaults to All tasks, including unscheduled and completed tasks.
+- The Task panel defaults to All tasks, showing only unfinished tasks, including
+  unscheduled tasks. Reordering preserves hidden completed tasks' positions.
   Today's tasks filters deadlines on the current local day; Done filters DONE.
   The count beside the heading follows the selected filter. Today's tasks includes
   completed tasks and can therefore exceed the unfinished card count.
