@@ -36,6 +36,14 @@ ID และ userId กำหนดฝั่ง server ไม่รับจา�
 
 `archived: false` เปิดโปรเจกต์กลับมาใช้งานได้ description ใช้ `null` เพื่อล้างค่า วันที่ส่งกลับเป็น ISO strings ไม่รับ timestamp ของ Archive จาก client
 
+## เรียงลำดับ Sidebar
+
+ส่ง `PATCH /api/projects/reorder` พร้อม `{ "projectIds": ["id-1", "id-2"] }`
+โดยส่ง ID ของโปรเจกต์ที่ยังไม่ Archive ทั้งหมดของผู้ใช้ตามลำดับใหม่ ห้ามซ้ำ
+ระบบบันทึก `position` เป็น 0, 1, 2, ... ใน transaction เดียว
+หากรายการไม่ตรงกับข้อมูลปัจจุบันจะตอบ `409` โดยไม่แก้ลำดับบางส่วน
+สำเร็จจะตอบ `200 { "message": "Project order saved" }`
+
 ## Errors
 
 - `400`: body / filter ไม่ถูกต้อง หรือมีฟิลด์ที่ไม่รองรับ

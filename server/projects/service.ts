@@ -23,6 +23,41 @@ export async function listProjects(
   return result.rows;
 }
 
+export async function reorderProjects(userId: string, projectIds: string[]) {
+  const client = await getDb().connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(
+      'SELECT "id" FROM public."user" WHERE "id" = $1 FOR UPDATE',
+      [userId],
+    );
+    const active = await client.query<{ id: string }>(
+      'SELECT "id" FROM public.projects WHERE "userId" = $1 AND "archivedAt" IS NULL ORDER BY "id" FOR UPDATE',
+      [userId],
+    );
+    const ids = new Set(projectIds);
+    if (
+      active.rows.length !== ids.size ||
+      active.rows.some((row) => !ids.has(row.id))
+    ) {
+      throw new ApiError(409, "Projects changed. Refresh and try again.");
+    }
+    await client.query(
+      `UPDATE public.projects AS p
+       SET "position" = ordering.ordinality::integer - 1, "updatedAt" = now()
+       FROM unnest($2::text[]) WITH ORDINALITY AS ordering(id, ordinality)
+       WHERE p."id" = ordering.id AND p."userId" = $1`,
+      [userId, projectIds],
+    );
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 export async function createProject(
   userId: string,
   input: ProjectInput,

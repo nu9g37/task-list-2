@@ -169,6 +169,36 @@
 .projectNavigation[hidden] {
   display: none;
 }
+.sortableProjects {
+  position: relative;
+  display: grid;
+  gap: 4px;
+}
+.projectDraggable[draggable="true"],
+.projectDraggable[draggable="true"] a {
+  cursor: grab;
+}
+.projectDraggable:focus-visible {
+  outline: 2px solid var(--green);
+  border-radius: 8px;
+}
+.projectDragSource {
+  position: absolute;
+  width: 100%;
+  opacity: 0;
+  pointer-events: none;
+}
+.projectDropGap {
+  box-sizing: border-box;
+  border: 1px dashed var(--green);
+  border-radius: 8px;
+  background: var(--green-soft);
+}
+.projectOrderMessage {
+  margin: 4px 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
 .projectToggle,
 .addProject:not([aria-disabled="true"]) {
   cursor: pointer;

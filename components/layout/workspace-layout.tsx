@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -23,6 +24,8 @@ const WorkspaceContext = createContext<{
   search: string;
   setSearch: (value: string) => void;
   projectChanged: (deletedId?: string) => void;
+  reorderProjects: (ids: string[]) => Promise<void>;
+  reordering: boolean;
 } | null>(null);
 
 export function useWorkspace() {
@@ -48,11 +51,12 @@ export function WorkspaceLayout({ children }: { children: ReactNode }) {
   const [projectFormOpen, setProjectFormOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [revision, setRevision] = useState(0);
-  const publish = useCallback(
-    (data: OverviewData) =>
-      setSidebar({ user: data.user, projects: data.projects }),
-    [],
-  );
+  const [reordering, setReordering] = useState(false);
+  const savingOrder = useRef(false);
+  const publish = useCallback((data: OverviewData) => {
+    if (!savingOrder.current)
+      setSidebar({ user: data.user, projects: data.projects });
+  }, []);
   const title =
     pathname === "/calendar"
       ? "Calendar"
@@ -74,9 +78,47 @@ export function WorkspaceLayout({ children }: { children: ReactNode }) {
     setRevision((value) => value + 1);
   }
 
+  async function reorderProjects(ids: string[]) {
+    if (savingOrder.current) return;
+    const previous = sidebar.projects;
+    savingOrder.current = true;
+    setReordering(true);
+    setSidebar((value) => ({
+      ...value,
+      projects: ids.map((id, position) => ({
+        ...previous.find((project) => project.id === id)!,
+        position,
+      })),
+    }));
+    try {
+      const response = await fetch("/api/projects/reorder", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectIds: ids }),
+      });
+      if (!response.ok)
+        throw new Error("Unable to save project order. Please try again.");
+    } catch (error) {
+      setSidebar((value) => ({ ...value, projects: previous }));
+      throw error;
+    } finally {
+      savingOrder.current = false;
+      setReordering(false);
+      setRevision((value) => value + 1);
+    }
+  }
+
   return (
     <WorkspaceContext.Provider
-      value={{ revision, publish, search, setSearch, projectChanged }}
+      value={{
+        revision,
+        publish,
+        search,
+        setSearch,
+        projectChanged,
+        reorderProjects,
+        reordering,
+      }}
     >
       <AppShell
         pageTitle={title}

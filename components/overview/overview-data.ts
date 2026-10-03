@@ -22,6 +22,7 @@ export interface ApiTask {
 
 interface ApiProject {
   id: string;
+  position: number;
   name: string;
   color: string;
   description?: string | null;

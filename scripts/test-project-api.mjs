@@ -64,6 +64,7 @@ try {
   for (const [path, method] of [
     ["/api/projects", "GET"],
     ["/api/projects", "POST"],
+    ["/api/projects/reorder", "PATCH"],
     ["/api/projects/missing", "GET"],
     ["/api/projects/missing", "PATCH"],
     ["/api/projects/missing", "DELETE"],
@@ -219,6 +220,73 @@ try {
     concurrent[1].data.project.position,
   );
   const taskId = randomUUID();
+  const orderedIds = [
+    concurrent[1].data.project.id,
+    project.id,
+    concurrent[0].data.project.id,
+  ];
+  status(
+    await request("/api/projects/reorder", {
+      method: "PATCH",
+      cookie: owner.cookie,
+      body: { projectIds: orderedIds },
+    }),
+    200,
+  );
+  const reordered = await request("/api/projects", { cookie: owner.cookie });
+  assert.deepEqual(
+    reordered.data.projects.map((row) => row.id),
+    orderedIds,
+  );
+  assert.deepEqual(
+    reordered.data.projects.map((row) => row.position),
+    [0, 1, 2],
+  );
+  for (const projectIds of [[], [project.id, project.id], [42]]) {
+    status(
+      await request("/api/projects/reorder", {
+        method: "PATCH",
+        cookie: owner.cookie,
+        body: { projectIds },
+      }),
+      400,
+    );
+  }
+  for (const projectIds of [
+    [project.id],
+    [...orderedIds.slice(0, 2), randomUUID()],
+  ]) {
+    status(
+      await request("/api/projects/reorder", {
+        method: "PATCH",
+        cookie: owner.cookie,
+        body: { projectIds },
+      }),
+      409,
+    );
+  }
+  status(
+    await request("/api/projects/reorder", {
+      method: "PATCH",
+      cookie: other.cookie,
+      body: { projectIds: orderedIds },
+    }),
+    409,
+  );
+  status(
+    await request("/api/projects/reorder", {
+      method: "PATCH",
+      cookie: owner.cookie,
+      origin: "https://example.org",
+      body: { projectIds: orderedIds },
+    }),
+    403,
+  );
+  const unchanged = await request("/api/projects", { cookie: owner.cookie });
+  assert.deepEqual(
+    unchanged.data.projects.map((row) => row.id),
+    orderedIds,
+  );
   const completedTaskId = randomUUID();
   const unrelatedTaskIds = [randomUUID(), randomUUID(), randomUUID()];
   await pool.query(

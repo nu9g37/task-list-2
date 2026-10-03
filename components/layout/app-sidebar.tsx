@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 import Link from "next/link";
-import { ProjectNavItem } from "@/components/projects/project-nav-item";
+import { SortableProjectList } from "@/components/projects/sortable-project-list";
 import { usePathname } from "next/navigation";
 import { Icon } from "@/components/ui/icon";
 import type {
@@ -98,13 +98,10 @@ export function AppSidebar({
           className={styles.projectNavigation}
           hidden={!projectsOpen}
         >
-          {projects.map((project) => (
-            <ProjectNavItem
-              key={project.id}
-              project={project}
-              active={activeProjectId === project.id}
-            />
-          ))}
+          <SortableProjectList
+            projects={projects}
+            activeProjectId={activeProjectId}
+          />
           <button
             type="button"
             aria-disabled={!canAddProject}

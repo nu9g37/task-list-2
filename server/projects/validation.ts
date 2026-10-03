@@ -8,6 +8,23 @@ export interface ProjectInput {
   archived?: boolean;
 }
 
+export function parseProjectOrder(body: Record<string, unknown>): string[] {
+  const ids = body.projectIds;
+  if (
+    Object.keys(body).some((key) => key !== "projectIds") ||
+    !Array.isArray(ids) ||
+    ids.length === 0 ||
+    ids.some((id) => typeof id !== "string" || !id || id.length > 200) ||
+    new Set(ids).size !== ids.length
+  ) {
+    throw new ApiError(
+      400,
+      "projectIds must be a non-empty list of unique IDs",
+    );
+  }
+  return ids;
+}
+
 export function parseProjectInput(
   body: Record<string, unknown>,
   update = false,

@@ -42,6 +42,7 @@ export function ProjectNavItem({
         className={`${styles.projectNavRow} ${active ? styles.navActive : ""}`}
       >
         <Link
+          draggable={false}
           href={`/projects/${encodeURIComponent(project.id)}`}
           className={styles.projectNavItem}
           aria-current={active ? "page" : undefined}
