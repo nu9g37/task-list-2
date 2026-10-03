@@ -170,11 +170,11 @@
   display: none;
 }
 .projectToggle,
-.addProject:not(:disabled) {
+.addProject:not([aria-disabled="true"]) {
   cursor: pointer;
 }
 .projectToggle:hover,
-.addProject:not(:disabled):hover {
+.addProject:not([aria-disabled="true"]):hover {
   background: var(--green-soft);
   border-radius: 8px;
   color: var(--green);
@@ -339,7 +339,7 @@
   flex: 1;
   min-width: 0;
 }
-.profile:disabled {
+.profile[aria-disabled="true"] {
   cursor: default;
   opacity: 0.6;
 }

@@ -78,8 +78,8 @@ export function DeleteProjectDialog({
           </button>
         </div>
         <p id="delete-project-description" className={styles.intro}>
-          “{project.name}” will be permanently deleted. Move or delete its tasks
-          first. This cannot be undone.
+          “{project.name}” and all its tasks will be permanently deleted. This
+          cannot be undone.
         </p>
         {error && (
           <p role="alert" className={styles.error}>

@@ -219,38 +219,67 @@ try {
     concurrent[1].data.project.position,
   );
   const taskId = randomUUID();
+  const completedTaskId = randomUUID();
+  const unrelatedTaskIds = [randomUUID(), randomUUID(), randomUUID()];
   await pool.query(
     'INSERT INTO public.tasks ("id", "userId", "projectId", "title") VALUES ($1, $2, $3, $4)',
-    [taskId, owner.id, project.id, "Deletion blocker fixture"],
+    [taskId, owner.id, project.id, "Project deletion fixture"],
   );
+  await pool.query(
+    'INSERT INTO public.tasks ("id", "userId", "projectId", "title", "status", "completedAt") VALUES ($1, $2, $3, $4, \'DONE\', now())',
+    [completedTaskId, owner.id, project.id, "Completed deletion fixture"],
+  );
+  for (const [index, userId, projectId] of [
+    [0, owner.id, null],
+    [1, owner.id, concurrent[0].data.project.id],
+    [2, other.id, null],
+  ]) {
+    await pool.query(
+      'INSERT INTO public.tasks ("id", "userId", "projectId", "title") VALUES ($1, $2, $3, $4)',
+      [unrelatedTaskIds[index], userId, projectId, "Unrelated task fixture"],
+    );
+  }
   status(
     await request(`/api/projects/${project.id}`, {
       method: "DELETE",
-      cookie: owner.cookie,
+      cookie: other.cookie,
     }),
-    409,
+    404,
   );
   const preserved = await pool.query(
-    'SELECT "id" FROM public.tasks WHERE "id" = $1 AND "userId" = $2',
-    [taskId, owner.id],
+    'SELECT "id" FROM public.tasks WHERE "projectId" = $1',
+    [project.id],
   );
-  assert.equal(preserved.rowCount, 1);
-  await pool.query(
-    'DELETE FROM public.tasks WHERE "id" = $1 AND "userId" = $2',
-    [taskId, owner.id],
-  );
+  assert.equal(preserved.rowCount, 2);
   const deleted = await request(`/api/projects/${project.id}`, {
     method: "DELETE",
     cookie: owner.cookie,
   });
   status(deleted, 200);
   assert.deepEqual(deleted.data, { message: "Project deleted successfully" });
+  const removed = await pool.query(
+    'SELECT "id" FROM public.tasks WHERE "id" = ANY($1::text[])',
+    [[taskId, completedTaskId]],
+  );
+  assert.equal(removed.rowCount, 0);
+  const unrelated = await pool.query(
+    'SELECT "id" FROM public.tasks WHERE "id" = ANY($1::text[])',
+    [unrelatedTaskIds],
+  );
+  assert.equal(unrelated.rowCount, unrelatedTaskIds.length);
+  status(
+    await request(`/api/projects/${project.id}`, {
+      method: "DELETE",
+      cookie: owner.cookie,
+    }),
+    404,
+  );
   status(
     await request(`/api/projects/${project.id}`, { cookie: owner.cookie }),
     404,
   );
   console.log(
-    `Project API integration passed: ${checks} HTTP checks, ownership isolation, archive/restore, concurrent ordering and deletion protection.`,
+    `Project API integration passed: ${checks} HTTP checks, ownership isolation, archive/restore, concurrent ordering and project/task deletion.`,
   );
 } finally {
   // Only delete the exact fixture users created by this run and their data.

@@ -31,6 +31,8 @@ export function AppSidebar({
   const image = user?.image?.trim();
   const calendarActive = usePathname() === "/calendar";
   const projectListId = useId();
+  const canAddProject = Boolean(user && onAddProject);
+  const canOpenProfile = Boolean(user && onOpenProfile);
   const initials =
     user?.name
       .trim()
@@ -105,9 +107,12 @@ export function AppSidebar({
           ))}
           <button
             type="button"
-            disabled={!onAddProject || !user}
+            aria-disabled={!canAddProject}
+            tabIndex={canAddProject ? undefined : -1}
             className={styles.addProject}
-            onClick={onAddProject}
+            onClick={() => {
+              if (canAddProject) onAddProject?.();
+            }}
           >
             <Icon name="plus" size={16} />
             Add project
@@ -118,8 +123,11 @@ export function AppSidebar({
         <button
           type="button"
           className={styles.profile}
-          onClick={onOpenProfile}
-          disabled={!user || !onOpenProfile}
+          onClick={() => {
+            if (canOpenProfile) onOpenProfile?.();
+          }}
+          aria-disabled={!canOpenProfile}
+          tabIndex={canOpenProfile ? undefined : -1}
           aria-label="Open profile"
           aria-haspopup="dialog"
         >

@@ -104,25 +104,32 @@ export async function updateProject(
 }
 
 export async function deleteProject(userId: string, id: string): Promise<void> {
+  const client = await getDb().connect();
   try {
-    const result = await getDb().query(
+    await client.query("BEGIN");
+    // Match task creation/moves' lock order before locking the project and tasks.
+    await client.query(
+      'SELECT "id" FROM public."user" WHERE "id" = $1 FOR UPDATE',
+      [userId],
+    );
+    const project = await client.query(
+      'SELECT "id" FROM public.projects WHERE "id" = $1 AND "userId" = $2 FOR UPDATE',
+      [id, userId],
+    );
+    if (project.rowCount === 0) throw new ApiError(404, "Project not found");
+    await client.query(
+      'DELETE FROM public.tasks WHERE "projectId" = $1 AND "userId" = $2',
+      [id, userId],
+    );
+    await client.query(
       'DELETE FROM public.projects WHERE "id" = $1 AND "userId" = $2 RETURNING "id"',
       [id, userId],
     );
-    if (result.rowCount === 0) throw new ApiError(404, "Project not found");
+    await client.query("COMMIT");
   } catch (error) {
-    // The FK also protects against a task being inserted during deletion.
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "code" in error &&
-      (error.code === "23503" || error.code === "23001")
-    ) {
-      throw new ApiError(
-        409,
-        "Project still contains tasks. Move or delete them first.",
-      );
-    }
+    await client.query("ROLLBACK");
     throw error;
+  } finally {
+    client.release();
   }
 }
