@@ -81,7 +81,8 @@ async function main() {
         "priority",
         "dueAt",
         "completedAt",
-        "position",
+        "positionOverview",
+        "positionProject",
         "createdAt",
         "updatedAt",
       ],
@@ -117,7 +118,7 @@ async function main() {
 
 main().catch(() => {
   console.error(
-    "Database check failed. Check DATABASE_URL, PostgreSQL and the initial migration.",
+    "Database check failed. Check DATABASE_URL, PostgreSQL and the schema migrations.",
   );
   process.exitCode = 1;
 });

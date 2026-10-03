@@ -20,8 +20,10 @@ export interface Task {
   dueAt: Date | null;
   /** Set when status is DONE; clear when reopening the task. */
   completedAt: Date | null;
-  /** Order within the project or personal task list. */
-  position: number;
+  /** Order across all tasks owned by the user in overview. */
+  positionOverview: number;
+  /** Order within the project or personal task list, independent of overview. */
+  positionProject: number;
   createdAt: Date;
   updatedAt: Date;
 }

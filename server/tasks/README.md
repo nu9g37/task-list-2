@@ -29,9 +29,14 @@ Only `title` is required when creating. Defaults: `projectId`, `description`, `d
 and `completedAt` are null; `status` is `TODO`; `priority` is `MEDIUM`.
 `title` is trimmed and limited to 200 characters; `description` allows up to 10000.
 `status`: `TODO`, `DONE`. `priority`: `LOW`, `MEDIUM`, `HIGH`.
-`position` is an optional non-negative PostgreSQL integer (maximum 2147483647).
-Omitting it appends within the project, or the personal list when `projectId` is null.
-Moving to another list also appends unless a position is supplied.
+`positionOverview` and `positionProject` are optional non-negative PostgreSQL integers
+(maximum 2147483647). The old `position` field is no longer accepted.
+On creation, omitting `positionOverview` appends across all of the user's tasks
+(including archived projects); omitting `positionProject` appends within the project,
+or the personal list when `projectId` is null.
+Moving to another list appends within the destination unless `positionProject` is supplied.
+It preserves `positionOverview` unless explicitly supplied. Updating either position
+does not change the other.
 Automatic appends are serialized to give simultaneous creates/moves distinct positions.
 Explicit positions do not reorder other tasks or guarantee uniqueness.
 
@@ -48,13 +53,14 @@ DELETE permanently removes the task.
 
 ## List filters
 
-Filters combine with AND. Results sort by `position`, then `id`.
+Filters combine with AND. Without `projectId`, results sort by `positionOverview`,
+then `id`. With `projectId` (including `null`), they sort by `positionProject`, then `id`.
 
 | Query parameter          | Meaning                                              |
 | ------------------------ | ---------------------------------------------------- |
 | `projectId=<id>`         | Tasks in that project                                |
 | `projectId=null`         | Personal tasks                                       |
-| `status=TODO`            | One of the three statuses                            |
+| `status=TODO`            | TODO or DONE                                         |
 | `priority=HIGH`          | One of the three priorities                          |
 | `dueFrom=<ISO datetime>` | Inclusive deadline lower bound                       |
 | `dueTo=<ISO datetime>`   | Exclusive deadline upper bound                       |
@@ -69,10 +75,22 @@ when a deadline bound is present; if both bounds exist, dueFrom must be before d
 Missing tasks and tasks owned by another user return 404. Assigning to a missing or
 another user's project also returns 404. Creating or moving into an archived project
 returns 409. Existing archived tasks can still be read, edited, detached or deleted.
-The Project API prevents deleting a project while tasks remain (409).
+The Project API deletes a project and its tasks together in a transaction.
 
 Validation errors return 400; missing session 401; invalid origin 403;
 wrong body content type 415. All responses use `Cache-Control: no-store`.
+
+## Reorder tasks
+
+`PATCH /api/tasks/reorder` accepts `{ "taskIds": ["id-b", "id-a"] }` for overview,
+or adds `"projectId": "project-id"` for a project (`null` for personal tasks).
+Send every visible task in the selected scope exactly once, in the desired order.
+The endpoint updates only that scope's position field in one transaction. Archived
+tasks retain their relative slots in overview; project ordering is independent.
+Duplicate/invalid IDs return 400. A changed or incomplete list returns 409 without
+partial updates. Foreign/missing projects return 404; archived projects return 409.
+The UI offers a drag handle (mouse/touch) and Alt+Up/Down in All tasks when search is
+empty. Today, Done and search results cannot reorder. Failed saves restore the list.
 
 ## Verification
 

@@ -73,7 +73,8 @@ const tasks = [
   status: "TODO",
   priority: "MEDIUM",
   completedAt: null,
-  position: 0,
+  positionOverview: 0,
+  positionProject: 0,
 }));
 const data = buildOverview(user, snapshot, projects, tasks);
 assert.equal(searchOverview(data, " "), data);

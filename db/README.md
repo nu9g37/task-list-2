@@ -4,6 +4,7 @@
 2. รัน `SELECT current_database();` เพื่อตรวจว่ากำลังใช้ฐานข้อมูลของ Tasklist
 3. เปิดไฟล์ `migrations/0001_initial.sql` ด้วยปุ่ม Open File ของ Query Tool
 4. Execute ทั้งไฟล์ในครั้งเดียว (F5); รันครั้งเดียวในฐานข้อมูลใหม่ที่ยังไม่มีตารางเหล่านี้
+   จากนั้นรัน migration `0002_remove_in_progress.sql` และ `0003_split_task_positions.sql` ตามลำดับ เพื่อให้ได้ schema ล่าสุด
 5. เปิดและรัน `verify.sql` ต้องพบ `user`, `session`, `account`, `verification`, `projects`, `tasks`
 6. Refresh ที่ **Schemas → public → Tables**
 
@@ -13,6 +14,24 @@
 
 ฐานข้อมูลเดิมให้รัน `migrations/0002_remove_in_progress.sql` เพื่อเปลี่ยนสถานะ
 `IN_PROGRESS` เป็น `TODO` และจำกัดสถานะงานให้เหลือ `TODO` กับ `DONE`
+
+### แยกลำดับ Task (0003)
+
+`migrations/0003_split_task_positions.sql` เปลี่ยนชื่อ `tasks.position` เป็น
+`positionProject` โดยรักษาค่าเดิม รวมถึง default, check constraint และ index ของ project
+แล้วเพิ่ม `positionOverview` เป็นจำนวนเต็มไม่ติดลบและห้ามเป็น null
+โดยเติมค่า 0, 1, 2, ... แยกต่อผู้ใช้ ตามลำดับเดิม `position, id`
+ครอบคลุมทั้ง personal tasks และ tasks ใน project ที่ archive แล้ว
+การย้าย schema ไม่เปลี่ยน `updatedAt` ของ task และทำทั้งหมดใน transaction เดียว
+
+ทั้งสอง field มี default เป็น 0; backend ต้องคำนวณตำแหน่งต่อท้ายเอง
+โดย `positionOverview` ใช้ขอบเขตผู้ใช้ และ `positionProject` ใช้ขอบเขตผู้ใช้กับ project
+เมื่อย้าย project ให้คง `positionOverview` และปรับเฉพาะ `positionProject`
+
+Task API และ frontend ใช้ชื่อใหม่แล้ว ต้องรัน migration 0003 ก่อนเปิดใช้งานโค้ดชุดนี้
+โดยหยุดแอประหว่างเปลี่ยน schema เพราะโค้ดรุ่นเก่าที่ใช้ `tasks.position` จะใช้กับ schema ใหม่ไม่ได้
+ตัวตรวจ `db:check` คาดหวัง schema หลัง 0003 แล้ว
+รัน migration นี้ครั้งเดียว ไม่ต้องรัน migration ที่ใช้ไปแล้วซ้ำ
 
 - รหัสเป็น text; Better Auth สร้างรหัส Auth ส่วน backend ต้องสร้างรหัส Project / Task
 - ชื่อคอลัมน์ camelCase ใช้ double quotes ใน SQL เช่น `"userId"`, `"dueAt"`

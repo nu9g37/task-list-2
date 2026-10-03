@@ -40,7 +40,8 @@ function task(id, options = {}) {
     priority: "MEDIUM",
     dueAt: null,
     completedAt: null,
-    position: 0,
+    positionOverview: 0,
+    positionProject: 0,
     ...options,
   };
 }

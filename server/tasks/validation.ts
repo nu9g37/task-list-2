@@ -14,7 +14,26 @@ export interface TaskInput {
   status?: TaskStatus;
   priority?: TaskPriority;
   dueAt?: Date | null;
-  position?: number;
+  positionOverview?: number;
+  positionProject?: number;
+}
+
+export function parseTaskOrder(body: Record<string, unknown>) {
+  if (Object.keys(body).some((key) => !["taskIds", "projectId"].includes(key)))
+    throw new ApiError(400, "Unsupported order field");
+  const ids = body.taskIds;
+  if (
+    !Array.isArray(ids) ||
+    ids.some((id) => typeof id !== "string" || !id || id.length > 200) ||
+    new Set(ids).size !== ids.length
+  )
+    throw new ApiError(400, "taskIds must be an array of unique task IDs");
+  return {
+    taskIds: ids as string[],
+    projectId: Object.hasOwn(body, "projectId")
+      ? projectId(body.projectId)
+      : undefined,
+  };
 }
 
 /** Require an explicit timezone and reject invalid calendar dates before Date normalizes them. */
@@ -74,7 +93,8 @@ export function parseTaskInput(
     "status",
     "priority",
     "dueAt",
-    "position",
+    "positionOverview",
+    "positionProject",
   ];
   if (Object.keys(body).some((key) => !allowed.includes(key)))
     throw new ApiError(400, "Unsupported task field");
@@ -118,18 +138,19 @@ export function parseTaskInput(
   }
   if (Object.hasOwn(body, "dueAt"))
     input.dueAt = body.dueAt === null ? null : timestamp(body.dueAt, "dueAt");
-  if (Object.hasOwn(body, "position")) {
+  for (const key of ["positionOverview", "positionProject"] as const) {
+    if (!Object.hasOwn(body, key)) continue;
     if (
-      typeof body.position !== "number" ||
-      !Number.isInteger(body.position) ||
-      body.position < 0 ||
-      body.position > 2_147_483_647
+      typeof body[key] !== "number" ||
+      !Number.isInteger(body[key]) ||
+      body[key] < 0 ||
+      body[key] > 2_147_483_647
     )
       throw new ApiError(
         400,
-        "position must be a non-negative PostgreSQL integer",
+        `${key} must be a non-negative PostgreSQL integer`,
       );
-    input.position = body.position;
+    input[key] = body[key];
   }
   return input;
 }

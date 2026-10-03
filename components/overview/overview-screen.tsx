@@ -73,6 +73,33 @@ export function OverviewScreen({ projectId }: { projectId?: string }) {
     setAttempt((value) => value + 1);
   }
 
+  async function reorderTasks(taskIds: string[]) {
+    const response = await fetch("/api/tasks/reorder", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ taskIds, ...(projectId ? { projectId } : {}) }),
+    });
+    if (response.status === 401) {
+      router.replace("/sign-in");
+      throw new Error("Your session has ended. Please sign in again.");
+    }
+    if (!response.ok) {
+      if (response.status === 409) refreshTasks();
+      throw new Error(
+        response.status === 409
+          ? "Tasks changed. Refreshing the list; please try again."
+          : "Could not save task order. Please try again.",
+      );
+    }
+    try {
+      const updated = await loadOverview(undefined, fetch, projectId);
+      setState({ kind: "ready", data: updated });
+      publish(updated);
+    } catch {
+      retry();
+    }
+  }
+
   async function changeTaskStatus(id: string, completed: boolean) {
     const response = await fetch(`/api/tasks/${encodeURIComponent(id)}`, {
       method: "PATCH",
@@ -156,12 +183,14 @@ export function OverviewScreen({ projectId }: { projectId?: string }) {
           <SummaryCards data={visibleData!} />
           <div className={styles.contentGrid}>
             <TaskList
+              key={projectId ?? "overview"}
               tasks={visibleData!.tasks}
               searching={!!search.trim()}
               onAddTask={createTask}
               onStatusChange={changeTaskStatus}
               onEditTask={editTask}
               onDeleteTask={setDeletingTask}
+              onReorder={reorderTasks}
             />
             <FocusPanel data={visibleData!} />
           </div>

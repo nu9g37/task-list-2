@@ -17,7 +17,8 @@ export interface ApiTask {
   priority: TaskPriority;
   dueAt: string | null;
   completedAt: string | null;
-  position: number;
+  positionOverview: number;
+  positionProject: number;
 }
 
 interface ApiProject {

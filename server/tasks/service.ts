@@ -35,11 +35,78 @@ export async function listTasks(
       );
     }
   }
+  const positionColumn =
+    filters.projectId === undefined ? "positionOverview" : "positionProject";
   const result = await getDb().query<Task>(
-    `SELECT t.* FROM public.tasks t LEFT JOIN public.projects p ON p."id" = t."projectId" AND p."userId" = t."userId" WHERE ${clauses.join(" AND ")} ORDER BY t."position", t."id"`,
+    `SELECT t.* FROM public.tasks t LEFT JOIN public.projects p ON p."id" = t."projectId" AND p."userId" = t."userId" WHERE ${clauses.join(" AND ")} ORDER BY t."${positionColumn}", t."id"`,
     values,
   );
   return result.rows;
+}
+
+export async function reorderTasks(
+  userId: string,
+  taskIds: string[],
+  projectId?: string | null,
+) {
+  const client = await getDb().connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(
+      'SELECT "id" FROM public."user" WHERE "id" = $1 FOR UPDATE',
+      [userId],
+    );
+    // Lock project visibility before tasks, matching creation/move lock order.
+    const projects = await client.query<{
+      id: string;
+      archivedAt: Date | null;
+    }>(
+      'SELECT "id", "archivedAt" FROM public.projects WHERE "userId" = $1 ORDER BY "id" FOR SHARE',
+      [userId],
+    );
+    if (projectId != null) {
+      const project = projects.rows.find((row) => row.id === projectId);
+      if (!project) throw new ApiError(404, "Project not found");
+      if (project.archivedAt)
+        throw new ApiError(409, "Cannot reorder an archived project");
+    }
+    const column =
+      projectId === undefined ? "positionOverview" : "positionProject";
+    const rows = await client.query<Task>(
+      `SELECT * FROM public.tasks WHERE "userId" = $1${projectId === undefined ? "" : ' AND "projectId" IS NOT DISTINCT FROM $2::text'} ORDER BY "${column}", "id" FOR UPDATE`,
+      projectId === undefined ? [userId] : [userId, projectId],
+    );
+    const archived = new Set(
+      projects.rows.filter((row) => row.archivedAt).map((row) => row.id),
+    );
+    const visible = rows.rows.filter(
+      (row) => !row.projectId || !archived.has(row.projectId),
+    );
+    const ids = new Set(taskIds);
+    if (
+      ids.size !== taskIds.length ||
+      visible.length !== ids.size ||
+      visible.some((row) => !ids.has(row.id))
+    )
+      throw new ApiError(409, "Tasks changed. Refresh and try again.");
+    // Preserve archived tasks' slots in overview while reordering visible tasks.
+    let next = 0;
+    const ordered = rows.rows.map((row) =>
+      ids.has(row.id) ? taskIds[next++] : row.id,
+    );
+    await client.query(
+      `UPDATE public.tasks AS t SET "${column}" = ordering.ordinality::integer - 1, "updatedAt" = now()
+       FROM unnest($2::text[]) WITH ORDINALITY AS ordering(id, ordinality)
+       WHERE t."id" = ordering.id AND t."userId" = $1 AND t."${column}" IS DISTINCT FROM ordering.ordinality::integer - 1`,
+      [userId, ordered],
+    );
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 async function checkProject(
@@ -64,11 +131,13 @@ async function checkProject(
 async function nextPosition(
   client: PoolClient,
   userId: string,
-  projectId: string | null,
+  projectId: string | null | undefined,
 ): Promise<number> {
+  const column =
+    projectId === undefined ? "positionOverview" : "positionProject";
   const result = await client.query<{ position: string }>(
-    'SELECT (COALESCE(MAX("position"), -1)::bigint + 1)::text AS position FROM public.tasks WHERE "userId" = $1 AND "projectId" IS NOT DISTINCT FROM $2::text',
-    [userId, projectId],
+    `SELECT (COALESCE(MAX("${column}"), -1)::bigint + 1)::text AS position FROM public.tasks WHERE "userId" = $1${projectId === undefined ? "" : ' AND "projectId" IS NOT DISTINCT FROM $2::text'}`,
+    projectId === undefined ? [userId] : [userId, projectId],
   );
   const position = Number(result.rows[0].position);
   if (position > 2_147_483_647)
@@ -89,10 +158,12 @@ export async function createTask(
     );
     const projectId = input.projectId ?? null;
     await checkProject(client, userId, projectId);
-    const position =
-      input.position ?? (await nextPosition(client, userId, projectId));
+    const positionOverview =
+      input.positionOverview ?? (await nextPosition(client, userId, undefined));
+    const positionProject =
+      input.positionProject ?? (await nextPosition(client, userId, projectId));
     const result = await client.query<Task>(
-      'INSERT INTO public.tasks ("id", "userId", "projectId", "title", "description", "status", "priority", "dueAt", "completedAt", "position") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CASE WHEN $6 = \'DONE\' THEN now() ELSE NULL END, $9) RETURNING *',
+      'INSERT INTO public.tasks ("id", "userId", "projectId", "title", "description", "status", "priority", "dueAt", "completedAt", "positionOverview", "positionProject") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CASE WHEN $6 = \'DONE\' THEN now() ELSE NULL END, $9, $10) RETURNING *',
       [
         randomUUID(),
         userId,
@@ -102,7 +173,8 @@ export async function createTask(
         input.status ?? "TODO",
         input.priority ?? "MEDIUM",
         input.dueAt ?? null,
-        position,
+        positionOverview,
+        positionProject,
       ],
     );
     await client.query("COMMIT");
@@ -148,8 +220,12 @@ export async function updateTask(
       input.projectId !== current.rows[0].projectId
     ) {
       await checkProject(client, userId, input.projectId);
-      if (input.position === undefined)
-        changes.position = await nextPosition(client, userId, input.projectId);
+      if (input.positionProject === undefined)
+        changes.positionProject = await nextPosition(
+          client,
+          userId,
+          input.projectId,
+        );
     }
     const values: unknown[] = [id, userId];
     const assignments: string[] = [];
@@ -160,7 +236,8 @@ export async function updateTask(
       "status",
       "priority",
       "dueAt",
-      "position",
+      "positionOverview",
+      "positionProject",
     ] as const) {
       if (changes[key] !== undefined) {
         values.push(changes[key]);

@@ -1,123 +1,11 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Icon } from "@/components/ui/icon";
 import type { OverviewTask } from "./overview-data";
+import { TaskRow } from "./task-row";
 import styles from "./overview.module.css";
 
-function TaskRow({
-  task,
-  pending,
-  checked,
-  onToggle,
-  onEdit,
-  onDelete,
-}: {
-  task: OverviewTask;
-  pending: boolean;
-  checked: boolean;
-  onToggle: (task: OverviewTask, checked: boolean) => void;
-  onEdit: (task: OverviewTask) => void;
-  onDelete: (task: OverviewTask) => void;
-}) {
-  const menuId = useId();
-  const menuRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const menuOffset = useRef({ top: 0, left: 0 });
-  const [position, setPosition] = useState({ top: 0, left: 0 });
-  useEffect(() => {
-    function followTask() {
-      const menu = menuRef.current;
-      if (!menu?.matches(":popover-open") || !triggerRef.current) return;
-      const rect = triggerRef.current.getBoundingClientRect();
-      menu.style.top = `${rect.top + menuOffset.current.top}px`;
-      menu.style.left = `${rect.left + menuOffset.current.left}px`;
-    }
-    // Capture scrolls from both the workspace and the task list itself.
-    window.addEventListener("scroll", followTask, true);
-    window.addEventListener("resize", followTask);
-    return () => {
-      window.removeEventListener("scroll", followTask, true);
-      window.removeEventListener("resize", followTask);
-    };
-  }, []);
-  return (
-    <li className={`${styles.taskRow} ${checked ? styles.completedRow : ""}`}>
-      <input
-        type="checkbox"
-        checked={checked}
-        disabled={pending}
-        onChange={(event) => onToggle(task, event.target.checked)}
-        aria-label={`${checked ? "Reopen" : "Complete"} ${task.title}`}
-      />
-      <div className={styles.taskCopy}>
-        <p>{task.title}</p>
-        <span>
-          {task.project} · {task.detail}
-        </span>
-      </div>
-      <span className={`${styles.badge} ${styles[`priority${task.priority}`]}`}>
-        {task.priority}
-      </span>
-      <button
-        ref={triggerRef}
-        type="button"
-        disabled={pending}
-        popoverTarget={menuId}
-        className={styles.iconButton}
-        aria-label={`More options for ${task.title}`}
-        onClick={(event) => {
-          const rect = event.currentTarget.getBoundingClientRect();
-          const nextPosition = {
-            top:
-              rect.bottom + 5 + 90 > window.innerHeight
-                ? rect.top - 95
-                : rect.bottom + 5,
-            left: Math.max(8, rect.right - 136),
-          };
-          menuOffset.current = {
-            top: nextPosition.top - rect.top,
-            left: nextPosition.left - rect.left,
-          };
-          setPosition(nextPosition);
-          if (menuRef.current) {
-            menuRef.current.style.top = `${nextPosition.top}px`;
-            menuRef.current.style.left = `${nextPosition.left}px`;
-          }
-        }}
-      >
-        <Icon name="more" size={16} />
-      </button>
-      <div
-        ref={menuRef}
-        id={menuId}
-        popover="auto"
-        className={styles.taskMenu}
-        style={position}
-      >
-        <button
-          type="button"
-          onClick={() => {
-            menuRef.current?.hidePopover();
-            onEdit(task);
-          }}
-        >
-          Edit
-        </button>
-        <button
-          type="button"
-          className={styles.deleteMenuItem}
-          onClick={() => {
-            menuRef.current?.hidePopover();
-            onDelete(task);
-          }}
-        >
-          Delete
-        </button>
-      </div>
-    </li>
-  );
-}
 export function TaskList({
   tasks,
   searching = false,
@@ -125,6 +13,7 @@ export function TaskList({
   onStatusChange,
   onEditTask,
   onDeleteTask,
+  onReorder,
 }: {
   tasks: OverviewTask[];
   searching?: boolean;
@@ -132,6 +21,7 @@ export function TaskList({
   onStatusChange: (id: string, completed: boolean) => Promise<void>;
   onEditTask: (task: OverviewTask) => void;
   onDeleteTask: (task: OverviewTask) => void;
+  onReorder: (taskIds: string[]) => Promise<void>;
 }) {
   const [activeTab, setActiveTab] = useState<"all" | "today" | "done">("all");
   const [updating, setUpdating] = useState<{
@@ -139,9 +29,52 @@ export function TaskList({
     completed: boolean;
   } | null>(null);
   const [error, setError] = useState("");
+  const [order, setOrder] = useState<string[] | null>(null);
+  const [message, setMessage] = useState("");
+  const saving = useRef(false);
+  const list = useRef<HTMLUListElement>(null);
+  const drag = useRef<{ id: string; index: number } | null>(null);
+  const [dragging, setDragging] = useState<{
+    id: string;
+    index: number;
+  } | null>(null);
+  const busy = !!updating || order !== null;
+  const canReorder = activeTab === "all" && !searching && tasks.length > 1;
+
+  async function move(id: string, index: number) {
+    if (!canReorder || busy || saving.current) return;
+    const ids = tasks.map((task) => task.id);
+    const from = ids.indexOf(id);
+    if (from < 0 || from === index) return;
+    ids.splice(from, 1);
+    ids.splice(index, 0, id);
+    saving.current = true;
+    setOrder(ids);
+    setError("");
+    setMessage("");
+    try {
+      await onReorder(ids);
+      setMessage(`Task moved to position ${index + 1}.`);
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Could not save task order.",
+      );
+    } finally {
+      saving.current = false;
+      setOrder(null);
+      requestAnimationFrame(() => {
+        const row = Array.from(
+          list.current?.querySelectorAll<HTMLElement>("[data-task-id]") ?? [],
+        ).find((row) => row.dataset.taskId === id);
+        row
+          ?.querySelector<HTMLButtonElement>("button")
+          ?.focus({ preventScroll: true });
+      });
+    }
+  }
 
   async function toggle(task: OverviewTask, completed: boolean) {
-    if (updating) return;
+    if (busy || saving.current) return;
     setError("");
     setUpdating({ id: task.id, completed });
     try {
@@ -161,7 +94,10 @@ export function TaskList({
     { id: "today", label: "Today's tasks" },
     { id: "done", label: "Done" },
   ] as const;
-  const visibleTasks = tasks.filter(
+  const orderedTasks = order
+    ? order.flatMap((id) => tasks.filter((task) => task.id === id))
+    : tasks;
+  const visibleTasks = orderedTasks.filter(
     (task) =>
       activeTab === "all" ||
       (activeTab === "today" ? task.dueToday : task.completed),
@@ -191,6 +127,7 @@ export function TaskList({
               type="button"
               className={styles.softButton}
               onClick={onAddTask}
+              disabled={busy}
             >
               <Icon name="plus" size={16} />
               Add task
@@ -203,6 +140,7 @@ export function TaskList({
               key={tab.id}
               type="button"
               aria-pressed={activeTab === tab.id}
+              disabled={busy}
               className={activeTab === tab.id ? styles.activeTab : undefined}
               onClick={() => setActiveTab(tab.id)}
             >
@@ -216,13 +154,106 @@ export function TaskList({
           {error}
         </p>
       )}
+      <span className={styles.orderAnnouncement} role="status">
+        {message}
+      </span>
       {visibleTasks.length ? (
-        <ul className={styles.tasks}>
-          {visibleTasks.map((task) => (
+        <ul ref={list} className={styles.tasks} aria-busy={busy}>
+          {visibleTasks.map((task, index) => (
             <TaskRow
               key={task.id}
               task={task}
-              pending={!!updating}
+              pending={busy}
+              orderClassName={
+                canReorder && dragging
+                  ? dragging.id === task.id
+                    ? styles.taskDragSource
+                    : dragging.index === index
+                      ? tasks.findIndex((row) => row.id === dragging.id) < index
+                        ? styles.taskDropAfter
+                        : styles.taskDropBefore
+                      : ""
+                  : ""
+              }
+              reorderHandle={
+                canReorder ? (
+                  <button
+                    type="button"
+                    className={styles.taskDragHandle}
+                    disabled={busy}
+                    aria-label={`Reorder ${task.title}. Use Alt and Up or Down arrow.`}
+                    title="Drag to reorder, or use Alt + Up/Down"
+                    onPointerDown={(event) => {
+                      if (busy || event.button !== 0 || !event.isPrimary)
+                        return;
+                      event.currentTarget.setPointerCapture(event.pointerId);
+                      drag.current = { id: task.id, index };
+                      setDragging(drag.current);
+                    }}
+                    onPointerMove={(event) => {
+                      if (!drag.current || !list.current) return;
+                      const rows = Array.from(
+                        list.current.querySelectorAll<HTMLElement>(
+                          "[data-task-id]",
+                        ),
+                      );
+                      const target = rows.findIndex(
+                        (row) =>
+                          event.clientY < row.getBoundingClientRect().bottom,
+                      );
+                      const next = target < 0 ? rows.length - 1 : target;
+                      drag.current = { ...drag.current, index: next };
+                      setDragging(drag.current);
+                      const bounds = list.current.getBoundingClientRect();
+                      if (event.clientY < bounds.top + 32)
+                        list.current.scrollTop -= 16;
+                      if (event.clientY > bounds.bottom - 32)
+                        list.current.scrollTop += 16;
+                    }}
+                    onPointerUp={(event) => {
+                      const current = drag.current;
+                      drag.current = null;
+                      setDragging(null);
+                      event.currentTarget.releasePointerCapture(
+                        event.pointerId,
+                      );
+                      if (current) void move(current.id, current.index);
+                    }}
+                    onLostPointerCapture={() => {
+                      drag.current = null;
+                      setDragging(null);
+                    }}
+                    onPointerCancel={() => {
+                      drag.current = null;
+                      setDragging(null);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Escape") {
+                        drag.current = null;
+                        setDragging(null);
+                      }
+                      if (
+                        event.altKey &&
+                        ["ArrowUp", "ArrowDown"].includes(event.key)
+                      ) {
+                        event.preventDefault();
+                        void move(
+                          task.id,
+                          Math.max(
+                            0,
+                            Math.min(
+                              tasks.length - 1,
+                              index + (event.key === "ArrowUp" ? -1 : 1),
+                            ),
+                          ),
+                        );
+                      }
+                    }}
+                  >
+                    <Icon name="menu" size={18} />
+                  </button>
+                ) : undefined
+              }
               checked={
                 updating?.id === task.id ? updating.completed : task.completed
               }

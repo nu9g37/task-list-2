@@ -136,7 +136,9 @@ try {
   assert.equal(personal.priority, "MEDIUM");
   assert.equal(personal.dueAt, null);
   assert.equal(personal.completedAt, null);
-  assert.equal(personal.position, 0);
+  assert.equal(personal.positionProject, 0);
+  assert.equal(personal.positionOverview, 0);
+  assert.equal(Object.hasOwn(personal, "position"), false);
   const task = await create({
     title: "Project task",
     projectId: project.id,
@@ -144,7 +146,8 @@ try {
     dueAt: "2026-10-01T09:00:00+07:00",
   });
   assert.equal(task.dueAt, "2026-10-01T02:00:00.000Z");
-  assert.equal(task.position, 0);
+  assert.equal(task.positionProject, 0);
+  assert.equal(task.positionOverview, 1);
   const detail = status(
     await request(`/api/tasks/${task.id}`, { cookie: owner.cookie }),
     200,
@@ -182,8 +185,13 @@ try {
     { title: "Valid", projectId: "" },
     { title: "Valid", status: "INVALID" },
     { title: "Valid", priority: null },
-    { title: "Valid", position: -1 },
-    { title: "Valid", position: 2147483648 },
+    { title: "Valid", positionProject: -1 },
+    { title: "Valid", positionProject: 2147483648 },
+    { title: "Valid", positionOverview: -1 },
+    { title: "Valid", positionOverview: 2147483648 },
+    { title: "Valid", positionOverview: 1.5 },
+    { title: "Valid", positionProject: null },
+    { title: "Valid", position: 0 },
     { title: "Valid", description: 123 },
     { title: "Valid", userId: other.id },
     { title: "Valid", completedAt: "2026-10-01T00:00:00Z" },
@@ -366,16 +374,86 @@ try {
     status(await request(`/api/tasks${query}`, { cookie: owner.cookie }), 400);
   }
   const moved = await patch(personal.id, { projectId: project.id });
-  assert.equal(moved.position, boundary.position + 1);
-  const detached = await patch(personal.id, { projectId: null, position: 12 });
+  assert.equal(moved.positionProject, boundary.positionProject + 1);
+  assert.equal(moved.positionOverview, personal.positionOverview);
+  const detached = await patch(personal.id, {
+    projectId: null,
+    positionProject: 12,
+  });
   assert.equal(detached.projectId, null);
-  assert.equal(detached.position, 12);
+  assert.equal(detached.positionProject, 12);
+  assert.equal(detached.positionOverview, personal.positionOverview);
   const concurrent = await Promise.all(
     ["First append", "Second append"].map((title) =>
       create({ title, projectId: project.id }),
     ),
   );
-  assert.notEqual(concurrent[0].position, concurrent[1].position);
+  assert.notEqual(concurrent[0].positionProject, concurrent[1].positionProject);
+  assert.notEqual(
+    concurrent[0].positionOverview,
+    concurrent[1].positionOverview,
+  );
+  const overviewChanged = await patch(task.id, { positionOverview: 100 });
+  assert.equal(overviewChanged.positionProject, task.positionProject);
+  assert.equal((await list()).at(-1).id, task.id);
+  assert.equal((await list(`?projectId=${project.id}`))[0].id, task.id);
+  const projectChanged = await patch(task.id, { positionProject: 100 });
+  assert.equal(projectChanged.positionOverview, 100);
+  assert.equal((await list(`?projectId=${project.id}`)).at(-1).id, task.id);
+  assert.equal((await list()).at(-1).id, task.id);
+  // Restore the project position so the existing move assertions remain meaningful.
+  await patch(task.id, { positionProject: task.positionProject });
+  const beforeOrder = await list();
+  const reorder = (body, cookie = owner.cookie) =>
+    request("/api/tasks/reorder", {
+      method: "PATCH",
+      cookie,
+      body,
+    });
+  status(await reorder({ taskIds: [] }, ""), 401);
+  status(await reorder({ taskIds: [task.id, task.id] }), 400);
+  status(await reorder({ taskIds: "invalid" }), 400);
+  status(await reorder({ taskIds: [], position: 0 }), 400);
+  status(await reorder({ taskIds: [task.id] }), 409);
+  status(await reorder({ taskIds: [task.id] }, other.cookie), 409);
+  status(await reorder({ taskIds: [], projectId: foreignProject.id }), 404);
+  const reversed = beforeOrder.map((row) => row.id).reverse();
+  status(await reorder({ taskIds: reversed }), 200);
+  assert.deepEqual(
+    (await list()).map((row) => row.id),
+    reversed,
+  );
+  for (const row of await list()) {
+    assert.equal(
+      row.positionProject,
+      beforeOrder.find((old) => old.id === row.id).positionProject,
+    );
+  }
+  const beforeProjectOrder = await list();
+  const projectIds = (await list(`?projectId=${project.id}`))
+    .map((row) => row.id)
+    .reverse();
+  status(await reorder({ taskIds: projectIds, projectId: project.id }), 200);
+  assert.deepEqual(
+    (await list(`?projectId=${project.id}`)).map((row) => row.id),
+    projectIds,
+  );
+  assert.deepEqual(
+    (await list()).map((row) => [row.id, row.positionOverview]),
+    beforeProjectOrder.map((row) => [row.id, row.positionOverview]),
+  );
+  const afterProjectOrder = await list();
+  status(
+    await reorder({ taskIds: projectIds.slice(1), projectId: project.id }),
+    409,
+  );
+  assert.deepEqual(await list(), afterProjectOrder);
+  for (const row of beforeOrder) {
+    await patch(row.id, {
+      positionOverview: row.positionOverview,
+      positionProject: row.positionProject,
+    });
+  }
   status(
     await request(`/api/projects/${project.id}`, {
       method: "PATCH",
@@ -390,6 +468,20 @@ try {
   );
   assert.equal((await list("?archived=true")).length, 4);
   assert.equal((await list("?archived=all")).length, 6);
+  status(await reorder({ taskIds: projectIds, projectId: project.id }), 409);
+  const hiddenOrder = (await list("?archived=true")).map((row) => row.id);
+  const activeIds = (await list()).map((row) => row.id).reverse();
+  status(await reorder({ taskIds: activeIds }), 200);
+  assert.deepEqual(
+    (await list()).map((row) => row.id),
+    activeIds,
+  );
+  assert.deepEqual(
+    (await list("?archived=true")).map((row) => row.id),
+    hiddenOrder,
+  );
+  // Restore the explicit overview position used by the move assertion below.
+  await patch(task.id, { positionOverview: 100 });
   status(
     await request("/api/tasks", {
       method: "POST",
@@ -409,14 +501,17 @@ try {
   assert.equal((await patch(task.id, { priority: "LOW" })).priority, "LOW");
   const archivedDetached = await patch(task.id, { projectId: null });
   assert.equal(archivedDetached.projectId, null);
-  assert.equal(archivedDetached.position, 13);
+  assert.equal(archivedDetached.positionProject, 13);
+  assert.equal(archivedDetached.positionOverview, 100);
   status(
     await request(`/api/projects/${project.id}`, {
       method: "DELETE",
       cookie: owner.cookie,
     }),
-    409,
+    200,
   );
+  assert.deepEqual(await list(`?projectId=${project.id}&archived=all`), []);
+  assert.equal((await list()).length, 3);
   for (const row of await list("?archived=all")) {
     const deleted = status(
       await request(`/api/tasks/${row.id}`, {
@@ -441,10 +536,10 @@ try {
       method: "DELETE",
       cookie: owner.cookie,
     }),
-    200,
+    404,
   );
   console.log(
-    `Task API integration passed: ${checks} HTTP checks; CRUD, ownership, validation, deadline boundaries/timezones, completion, project moves/archive, concurrent appends and deletion protection.`,
+    `Task API integration passed: ${checks} HTTP checks; CRUD, ownership, validation, deadline boundaries/timezones, completion, independent ordering, project moves/archive, concurrent appends and project/task deletion.`,
   );
 } finally {
   // Only remove the exact fixture users created by this run, never existing user data.
