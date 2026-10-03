@@ -17,6 +17,7 @@ const {
   buildOverview,
   buildProjectOverview,
   loadOverview,
+  updateOverviewTasks,
   OverviewRequestError,
 } = await import(
   "data:text/javascript;base64," + Buffer.from(outputText).toString("base64")
@@ -121,6 +122,48 @@ assert.ok(scopedView.tasks.every((task) => task.source.projectId === "p"));
 assert.equal(scopedView.summary.totalTasks, 5);
 assert.equal(scopedView.summary.todayTasks, 1);
 assert.equal(scopedView.summary.completedTasks, 3);
+// Local mutation results must update both scoped content and global sidebar counts.
+const moved = updateOverviewTasks(
+  scopedView,
+  fixtures.map((t) => (t.id === "due-today" ? { ...t, projectId: null } : t)),
+  asOf,
+);
+assert.equal(moved.tasks.length, 4);
+assert.equal(moved.projects[0].tasks, 4);
+assert.equal(moved.allTasks.length, 6);
+assert.equal(moved.summary.todayTasks, 0);
+const completed = updateOverviewTasks(
+  view,
+  fixtures.map((t) =>
+    t.id === "due-today" ? { ...t, status: "DONE", completedAt: asOf } : t,
+  ),
+  asOf,
+);
+assert.equal(completed.summary.completedTasks, 4);
+assert.equal(completed.summary.todayTasks, 0);
+assert.equal(completed.focus.progress, 100);
+assert.equal(completed.projects[0].progress, 80);
+const removed = updateOverviewTasks(
+  completed,
+  completed.allTasks.filter((t) => t.id !== "due-today"),
+  asOf,
+);
+assert.equal(removed.summary.totalTasks, 5);
+assert.equal(removed.projects[0].tasks, 4);
+let loaderCalls = 0;
+assert.deepEqual(
+  await loadOverview(
+    undefined,
+    async (path) => {
+      loaderCalls++;
+      assert.equal(path, "/api/workspace?projectId=p");
+      return Response.json(scopedView);
+    },
+    "p",
+  ),
+  scopedView,
+);
+assert.equal(loaderCalls, 1);
 assert.throws(
   () => buildProjectOverview(user, snapshot, [], fixtures, "missing", []),
   (error) => error.status === 404,
@@ -209,6 +252,19 @@ try {
     [randomUUID(), randomUUID(), randomUUID(), owner.id, projectId, archivedId],
   );
   const live = await loadOverview(undefined, fetchFor(owner.cookie));
+  const measured = await fetch(base + "/api/workspace", {
+    headers: { Cookie: owner.cookie },
+  });
+  assert.match(
+    measured.headers.get("server-timing"),
+    /auth;dur=.*summary;dur=|summary;dur=.*auth;dur=/,
+  );
+  assert.match(measured.headers.get("server-timing"), /total;dur=/);
+  assert.equal(measured.headers.get("cache-control"), "no-store");
+  const rendered = await fetch(base + "/", {
+    headers: { Cookie: owner.cookie },
+  });
+  assert.match(await rendered.text(), /Live unfinished task/);
   assert.equal(live.summary.totalTasks, 2);
   assert.equal(live.summary.todayTasks, 1);
   assert.equal(live.user.name, "Frontend fixture 0");
@@ -253,6 +309,15 @@ try {
     307,
   );
   const foreign = await loadOverview(undefined, fetchFor(users[1].cookie));
+  assert.deepEqual(foreign.allTasks, []);
+  await assert.rejects(
+    loadOverview(undefined, fetchFor(users[1].cookie), projectId),
+    (error) => error.status === 404,
+  );
+  await assert.rejects(
+    loadOverview(undefined, fetchFor(owner.cookie), archivedId),
+    (error) => error.status === 404,
+  );
   assert.equal(foreign.summary.totalTasks, 0);
   assert.deepEqual(foreign.projects, []);
   assert.deepEqual(foreign.todayTasks, []);
@@ -267,7 +332,7 @@ try {
   assert.equal(expiredHome.status, 307);
   assert.equal(expiredHome.headers.get("location"), "/sign-in");
   console.log(
-    "Overview frontend passed: anonymous/expired-session redirects, authenticated page access, live four-API loading, owner isolation, empty/archive states, timezone/week boundaries, project/focus progress, 401/503 and cancellation.",
+    "Overview frontend passed: server-rendered tasks, single-request loading, timing headers, local mutation counters, moved tasks, owner isolation, project access, redirects, archive states, timezone/week boundaries, 401/503 and cancellation.",
   );
 } finally {
   if (userIds.length) {

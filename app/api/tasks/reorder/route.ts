@@ -1,3 +1,4 @@
+import { withServerTiming } from "@/server/timing";
 import {
   apiError,
   json,
@@ -10,14 +11,20 @@ import { parseTaskOrder } from "@/server/tasks/validation";
 
 export const runtime = "nodejs";
 
-export async function PATCH(request: Request) {
+async function handlePATCH(request: Request) {
   try {
     const userId = await requireUserId(request);
     requireAppOrigin(request);
     const order = parseTaskOrder(await readJsonObject(request));
-    await reorderTasks(userId, order.taskIds, order.projectId);
-    return json({ message: "Task order saved" });
+    const positions = await reorderTasks(
+      userId,
+      order.taskIds,
+      order.projectId,
+    );
+    return json({ message: "Task order saved", positions });
   } catch (error) {
     return apiError(error);
   }
 }
+
+export const PATCH = withServerTiming(handlePATCH);

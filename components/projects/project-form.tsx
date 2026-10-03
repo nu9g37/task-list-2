@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import type { OverviewProject } from "@/components/overview/overview-data";
+import type {
+  ApiProject,
+  OverviewProject,
+} from "@/components/overview/overview-data";
 import { Icon } from "@/components/ui/icon";
 import styles from "@/components/tasks/task-form.module.css";
 import colorStyles from "./project-form.module.css";
@@ -20,7 +23,7 @@ export function ProjectForm({
   project,
 }: {
   onClose: () => void;
-  onCreated: () => void;
+  onCreated: (project: ApiProject) => void;
   project?: OverviewProject;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -68,8 +71,9 @@ export function ProjectForm({
             : result.error || "Could not save the project. Please try again.",
         );
       }
+      const result: { project: ApiProject } = await response.json();
       onClose();
-      onCreated();
+      onCreated(result.project);
     } catch (error) {
       setError(
         error instanceof Error

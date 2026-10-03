@@ -1,11 +1,8 @@
 # Overview frontend
 
-The home page loads `/api/me`, `/api/overview`, `/api/projects`, and `/api/tasks`
-in parallel using same-origin session cookies and `cache: no-store`.
-Data is passed to the sidebar and each presentation component. No demo records are
-used. Loading, empty, request-failure/retry, and unauthenticated states are supported.
-Requests are cancelled on unmount, and a failed load never displays a partially
-loaded account or stale data.
+Overview, Calendar and Project pages authenticate once on the server and load their initial data directly from the workspace service. Independent summary, project and task queries run concurrently. The browser does not refetch on mount. Explicit refreshes use one authenticated `/api/workspace` request with `cache: no-store`.
+
+Task create/edit/status/delete and reorder apply saved results locally, rebuilding counters, focus, upcoming items and sidebar totals. Project create/edit/reorder also update the active view without a full reload. Project deletion and profile changes still revalidate. Failed writes preserve the previous data; reorder conflicts trigger a refresh. In-flight loads are cancelled before applying mutations so a late response cannot overwrite a saved result.
 
 `overview-data.ts` converts API data into the UI view model:
 
@@ -14,10 +11,10 @@ Overview and project routes share `app/(workspace)/layout.tsx`. The client works
 layout keeps the sidebar/header mounted during navigation, retains sidebar data
 while page content loads, and preserves the project folder disclosure state.
 Page data updates the sidebar through the workspace context; creating a project
-refreshes the active page without remounting the shell.
+updates the active page without remounting the shell.
 The server checks project ownership and returns 404 for missing, foreign or archived
-projects. The loader fetches `/api/tasks?projectId=...` for its task list, summaries,
-focus and upcoming deadline. Sidebar project counts continue to cover all projects.
+projects. The service derives project tasks from the single active-task result, sorting by
+project position for its task list, summaries, focus and upcoming deadline. Sidebar project counts continue to cover all projects.
 Creating a task defaults to the currently selected project.
 
 - The Tasks today card uses the Overview API's unfinished count.
@@ -61,6 +58,19 @@ Verification with the local Next dev server and PostgreSQL running:
 node scripts/test-overview-frontend.mjs
 ```
 
-This tests the actual loader against all four HTTP APIs with isolated fixture
+This tests the single-request loader and server-rendered tasks with isolated fixture
 accounts, plus deterministic timezone/week/progress calculations and errors. It
 cleans up only its own fixture users and records.
+
+## Production timing
+
+Task/project APIs and `/api/workspace` expose request-scoped `Server-Timing`
+headers. Inspect `auth`, `total`, and the workspace `summary`, `projects`, `tasks`
+measurements in browser Network tools. Parallel query durations overlap and must
+not be added together. Query measurements include pool waits and database round
+trips, not just SQL execution. Timings exclude cold startup before the handler
+and the browser-to-server network trip. No SQL, credentials or user data is logged.
+
+Compare these timings on Production before choosing infrastructure changes.
+Verify function/database region proximity and the database provider’s connection
+pooling configuration. Local build/test latency does not predict Production latency.

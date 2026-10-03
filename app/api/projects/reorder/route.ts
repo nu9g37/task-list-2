@@ -1,3 +1,4 @@
+import { withServerTiming } from "@/server/timing";
 import {
   apiError,
   json,
@@ -10,7 +11,7 @@ import { parseProjectOrder } from "@/server/projects/validation";
 
 export const runtime = "nodejs";
 
-export async function PATCH(request: Request) {
+async function handlePATCH(request: Request) {
   try {
     const userId = await requireUserId(request);
     requireAppOrigin(request);
@@ -23,3 +24,5 @@ export async function PATCH(request: Request) {
     return apiError(error);
   }
 }
+
+export const PATCH = withServerTiming(handlePATCH);

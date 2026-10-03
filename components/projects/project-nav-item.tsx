@@ -20,7 +20,7 @@ export function ProjectNavItem({
   const menu = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const [action, setAction] = useState<"edit" | "delete">();
-  const { projectChanged } = useWorkspace();
+  const { projectChanged, saveProject } = useWorkspace();
   useEffect(() => {
     function hide() {
       menu.current?.hidePopover();
@@ -85,7 +85,7 @@ export function ProjectNavItem({
         <ProjectForm
           project={project}
           onClose={() => setAction(undefined)}
-          onCreated={() => projectChanged()}
+          onCreated={saveProject}
         />
       )}
       {action === "delete" && (

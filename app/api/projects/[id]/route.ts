@@ -1,3 +1,4 @@
+import { withServerTiming } from "@/server/timing";
 import {
   apiError,
   json,
@@ -15,7 +16,7 @@ import { parseProjectInput } from "@/server/projects/validation";
 export const runtime = "nodejs";
 type Context = { params: Promise<{ id: string }> };
 
-export async function GET(request: Request, context: Context) {
+async function handleGET(request: Request, context: Context) {
   try {
     const userId = await requireUserId(request);
     const { id } = await context.params;
@@ -25,7 +26,7 @@ export async function GET(request: Request, context: Context) {
   }
 }
 
-export async function PATCH(request: Request, context: Context) {
+async function handlePATCH(request: Request, context: Context) {
   try {
     const userId = await requireUserId(request);
     requireAppOrigin(request);
@@ -37,7 +38,7 @@ export async function PATCH(request: Request, context: Context) {
   }
 }
 
-export async function DELETE(request: Request, context: Context) {
+async function handleDELETE(request: Request, context: Context) {
   try {
     const userId = await requireUserId(request);
     requireAppOrigin(request);
@@ -48,3 +49,7 @@ export async function DELETE(request: Request, context: Context) {
     return apiError(error);
   }
 }
+
+export const GET = withServerTiming(handleGET);
+export const PATCH = withServerTiming(handlePATCH);
+export const DELETE = withServerTiming(handleDELETE);

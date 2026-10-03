@@ -1,6 +1,7 @@
 "use client";
+import { useOverview } from "./use-overview";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWorkspace } from "@/components/layout/workspace-layout";
 import { searchOverview } from "@/components/tasks/task-search";
@@ -12,24 +13,25 @@ import { TaskList } from "./task-list";
 import { TaskForm } from "@/components/tasks/task-form";
 import { DeleteTaskDialog } from "@/components/tasks/delete-task-dialog";
 import {
-  loadOverview,
-  OverviewRequestError,
   type ApiTask,
   type OverviewTask,
   type OverviewData,
 } from "./overview-data";
 import styles from "./overview.module.css";
 
-type LoadState =
-  | { kind: "loading" }
-  | { kind: "ready"; data: OverviewData }
-  | { kind: "error" };
-
-export function OverviewScreen({ projectId }: { projectId?: string }) {
+export function OverviewScreen({
+  projectId,
+  initialData,
+}: {
+  projectId?: string;
+  initialData: OverviewData;
+}) {
   const router = useRouter();
-  const { revision, publish, search } = useWorkspace();
-  const [state, setState] = useState<LoadState>({ kind: "loading" });
-  const [attempt, setAttempt] = useState(0);
+  const { search } = useWorkspace();
+  const { data, error, retry, updateTasks, saveTask } = useOverview(
+    initialData,
+    projectId,
+  );
   const [taskFormOpen, setTaskFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<ApiTask>();
   const [deletingTask, setDeletingTask] = useState<OverviewTask>();
@@ -44,35 +46,6 @@ export function OverviewScreen({ projectId }: { projectId?: string }) {
     setTaskFormOpen(true);
   }
 
-  function refreshTasks() {
-    setAttempt((value) => value + 1);
-  }
-
-  useEffect(() => {
-    const controller = new AbortController();
-    loadOverview(controller.signal, fetch, projectId)
-      .then((data) => {
-        if (!controller.signal.aborted) {
-          setState({ kind: "ready", data });
-          publish(data);
-        }
-      })
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) return;
-        if (error instanceof OverviewRequestError && error.status === 401) {
-          router.replace("/sign-in");
-          return;
-        }
-        setState({ kind: "error" });
-      });
-    return () => controller.abort();
-  }, [attempt, router, projectId, revision, publish]);
-
-  function retry() {
-    setState({ kind: "loading" });
-    setAttempt((value) => value + 1);
-  }
-
   async function reorderTasks(taskIds: string[]) {
     const response = await fetch("/api/tasks/reorder", {
       method: "PATCH",
@@ -84,20 +57,29 @@ export function OverviewScreen({ projectId }: { projectId?: string }) {
       throw new Error("Your session has ended. Please sign in again.");
     }
     if (!response.ok) {
-      if (response.status === 409) refreshTasks();
+      if (response.status === 409) retry();
       throw new Error(
         response.status === 409
           ? "Tasks changed. Refreshing the list; please try again."
           : "Could not save task order. Please try again.",
       );
     }
-    try {
-      const updated = await loadOverview(undefined, fetch, projectId);
-      setState({ kind: "ready", data: updated });
-      publish(updated);
-    } catch {
-      retry();
-    }
+    const result: { positions: { id: string; position: number }[] } =
+      await response.json();
+    const positions = new Map(
+      result.positions.map(({ id, position }) => [id, position]),
+    );
+    updateTasks((tasks) =>
+      tasks.map((task) =>
+        positions.has(task.id)
+          ? {
+              ...task,
+              [projectId ? "positionProject" : "positionOverview"]:
+                positions.get(task.id)!,
+            }
+          : task,
+      ),
+    );
   }
 
   async function changeTaskStatus(id: string, completed: boolean) {
@@ -113,33 +95,15 @@ export function OverviewScreen({ projectId }: { projectId?: string }) {
     }
     if (!response.ok)
       throw new Error("Could not update the task. Please try again.");
-    // Keep the list mounted so its selected tab is preserved during refresh.
-    try {
-      const updated = await loadOverview(undefined, fetch, projectId);
-      setState({ kind: "ready", data: updated });
-      publish(updated);
-    } catch {
-      // The mutation succeeded. Reload rather than showing the old task status.
-      retry();
-    }
+    const result: { task: ApiTask } = await response.json();
+    saveTask(result.task);
   }
 
-  const visibleData =
-    state.kind === "ready" ? searchOverview(state.data, search) : undefined;
+  const visibleData = searchOverview(data, search);
 
   return (
     <>
-      {state.kind === "loading" ? (
-        <section className={styles.loadState} role="status" aria-live="polite">
-          <div className={styles.loadingLine} />
-          <div className={styles.loadingCards}>
-            {[1, 2, 3].map((id) => (
-              <div key={id} />
-            ))}
-          </div>
-          <p>Loading your workspace…</p>
-        </section>
-      ) : state.kind === "error" ? (
+      {error ? (
         <section className={styles.loadState} role="alert">
           <h1>Unable to load your workspace</h1>
           <p>Check your connection and try again.</p>
@@ -156,8 +120,8 @@ export function OverviewScreen({ projectId }: { projectId?: string }) {
           <section className={styles.greeting}>
             <div>
               <h1>
-                {state.data.currentProject?.name ??
-                  `${state.data.greeting}, ${state.data.user.name.trim().split(/\s+/)[0] || "there"}`}
+                {data.currentProject?.name ??
+                  `${data.greeting}, ${data.user.name.trim().split(/\s+/)[0] || "there"}`}
               </h1>
               <p>
                 {projectId
@@ -168,7 +132,7 @@ export function OverviewScreen({ projectId }: { projectId?: string }) {
             <div className={styles.greetingActions}>
               <span className={styles.date}>
                 <Icon name="calendar" size={16} />
-                <time dateTime={state.data.date}>{state.data.displayDate}</time>
+                <time dateTime={data.date}>{data.displayDate}</time>
               </span>
               <button
                 type="button"
@@ -194,23 +158,27 @@ export function OverviewScreen({ projectId }: { projectId?: string }) {
             />
             <FocusPanel data={visibleData!} />
           </div>
-          {!projectId && <ProjectCards projects={state.data.projects} />}
+          {!projectId && <ProjectCards projects={data.projects} />}
           {taskFormOpen && (
             <TaskForm
               open
-              timezone={state.data.timezone}
-              projects={state.data.projects}
+              timezone={data.timezone}
+              projects={data.projects}
               task={editingTask}
               defaultProjectId={projectId}
               onClose={() => setTaskFormOpen(false)}
-              onCreated={refreshTasks}
+              onCreated={saveTask}
             />
           )}
           {deletingTask && (
             <DeleteTaskDialog
               task={deletingTask}
               onClose={() => setDeletingTask(undefined)}
-              onDeleted={refreshTasks}
+              onDeleted={() =>
+                updateTasks((tasks) =>
+                  tasks.filter((task) => task.id !== deletingTask.id),
+                )
+              }
             />
           )}
         </>

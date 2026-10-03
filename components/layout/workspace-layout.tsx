@@ -13,10 +13,13 @@ import { AppShell } from "./app-shell";
 import { ProjectForm } from "@/components/projects/project-form";
 import { ProfileForm } from "@/components/profile/profile-form";
 import type {
+  ApiProject,
   OverviewData,
   OverviewProject,
   OverviewUser,
 } from "@/components/overview/overview-data";
+
+export type ProjectChange = { project: ApiProject } | { order: string[] };
 
 const WorkspaceContext = createContext<{
   revision: number;
@@ -24,6 +27,8 @@ const WorkspaceContext = createContext<{
   search: string;
   setSearch: (value: string) => void;
   projectChanged: (deletedId?: string) => void;
+  saveProject: (project: ApiProject) => void;
+  subscribeProjects: (listener: (change: ProjectChange) => void) => () => void;
   reorderProjects: (ids: string[]) => Promise<void>;
   reordering: boolean;
 } | null>(null);
@@ -53,6 +58,19 @@ export function WorkspaceLayout({ children }: { children: ReactNode }) {
   const [revision, setRevision] = useState(0);
   const [reordering, setReordering] = useState(false);
   const savingOrder = useRef(false);
+  const projectListeners = useRef(new Set<(change: ProjectChange) => void>());
+  const subscribeProjects = useCallback(
+    (listener: (change: ProjectChange) => void) => {
+      projectListeners.current.add(listener);
+      return () => {
+        projectListeners.current.delete(listener);
+      };
+    },
+    [],
+  );
+  function saveProject(project: ApiProject) {
+    projectListeners.current.forEach((listener) => listener({ project }));
+  }
   const publish = useCallback((data: OverviewData) => {
     if (!savingOrder.current)
       setSidebar({ user: data.user, projects: data.projects });
@@ -98,13 +116,15 @@ export function WorkspaceLayout({ children }: { children: ReactNode }) {
       });
       if (!response.ok)
         throw new Error("Unable to save project order. Please try again.");
+      savingOrder.current = false;
+      projectListeners.current.forEach((listener) => listener({ order: ids }));
     } catch (error) {
       setSidebar((value) => ({ ...value, projects: previous }));
+      setRevision((value) => value + 1);
       throw error;
     } finally {
       savingOrder.current = false;
       setReordering(false);
-      setRevision((value) => value + 1);
     }
   }
 
@@ -116,6 +136,8 @@ export function WorkspaceLayout({ children }: { children: ReactNode }) {
         search,
         setSearch,
         projectChanged,
+        saveProject,
+        subscribeProjects,
         reorderProjects,
         reordering,
       }}
@@ -132,7 +154,7 @@ export function WorkspaceLayout({ children }: { children: ReactNode }) {
         {projectFormOpen && (
           <ProjectForm
             onClose={() => setProjectFormOpen(false)}
-            onCreated={() => setRevision((value) => value + 1)}
+            onCreated={saveProject}
           />
         )}
         {profileOpen && sidebar.user && (

@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { useOverview } from "@/components/overview/use-overview";
 import { useRouter } from "next/navigation";
 import { useWorkspace } from "@/components/layout/workspace-layout";
 import {
-  loadOverview,
   OverviewRequestError,
   type OverviewData,
 } from "@/components/overview/overview-data";
@@ -22,12 +22,10 @@ import { CalendarGrid } from "./calendar-grid";
 import { DayPanel } from "./day-panel";
 import styles from "./calendar.module.css";
 
-export function CalendarScreen() {
+export function CalendarScreen({ initialData }: { initialData: OverviewData }) {
   const router = useRouter();
-  const { publish, revision, search } = useWorkspace();
-  const [data, setData] = useState<OverviewData>();
-  const [error, setError] = useState("");
-  const [attempt, setAttempt] = useState(0);
+  const { search } = useWorkspace();
+  const { data, error, retry, saveTask } = useOverview(initialData);
   const [month, setMonth] = useState<string>();
   const [selection, setSelection] = useState<string>();
   const [view, setView] = useState<"Month" | "Week" | "Agenda">("Month");
@@ -35,26 +33,6 @@ export function CalendarScreen() {
   const [mutationError, setMutationError] = useState("");
   const [updating, setUpdating] = useState(false);
   const mutationInFlight = useRef(false);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    loadOverview(controller.signal)
-      .then((result) => {
-        if (controller.signal.aborted) return;
-        setData(result);
-        publish(result);
-        setError("");
-      })
-      .catch((failure: unknown) => {
-        if (controller.signal.aborted) return;
-        if (failure instanceof OverviewRequestError && failure.status === 401) {
-          router.replace("/sign-in");
-          return;
-        }
-        setError("Unable to load your calendar. Please try again.");
-      });
-    return () => controller.abort();
-  }, [publish, revision, attempt, router]);
 
   async function toggle(task: CalendarTask) {
     if (mutationInFlight.current) return;
@@ -78,9 +56,8 @@ export function CalendarScreen() {
         return;
       }
       if (!response.ok) throw new Error();
-      const result = await loadOverview();
-      setData(result);
-      publish(result);
+      const result = await response.json();
+      saveTask(result.task);
     } catch (failure) {
       if (failure instanceof OverviewRequestError && failure.status === 401)
         router.replace("/sign-in");
@@ -94,11 +71,8 @@ export function CalendarScreen() {
   if (error)
     return (
       <section className={styles.empty} role="alert">
-        <p>{error}</p>
-        <button
-          className={styles.todayButton}
-          onClick={() => setAttempt((value) => value + 1)}
-        >
+        <p>Unable to load your calendar. Please try again.</p>
+        <button className={styles.todayButton} onClick={retry}>
           Try again
         </button>
       </section>
@@ -214,7 +188,7 @@ export function CalendarScreen() {
           defaultDate={selectedDay}
           projects={data.projects}
           onClose={() => setCreating(false)}
-          onCreated={() => setAttempt((value) => value + 1)}
+          onCreated={saveTask}
         />
       )}
     </>

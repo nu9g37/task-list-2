@@ -101,6 +101,9 @@ export async function reorderTasks(
       [userId, ordered],
     );
     await client.query("COMMIT");
+    return ordered.flatMap((id, position) =>
+      ids.has(id) ? [{ id, position }] : [],
+    );
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;

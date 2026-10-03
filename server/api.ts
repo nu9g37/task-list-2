@@ -2,6 +2,7 @@ import "server-only";
 
 import { getAuth } from "@/lib/auth";
 import { ConfigurationError, requireEnv } from "@/lib/env";
+import { measure } from "@/server/timing";
 
 export class ApiError extends Error {
   constructor(
@@ -13,7 +14,9 @@ export class ApiError extends Error {
 }
 
 export async function requireUserId(request: Request): Promise<string> {
-  const session = await getAuth().api.getSession({ headers: request.headers });
+  const session = await measure("auth", () =>
+    getAuth().api.getSession({ headers: request.headers }),
+  );
   if (!session) throw new ApiError(401, "Unauthorized");
   return session.user.id;
 }

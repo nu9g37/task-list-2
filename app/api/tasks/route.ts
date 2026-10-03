@@ -1,3 +1,4 @@
+import { withServerTiming } from "@/server/timing";
 import {
   apiError,
   json,
@@ -10,7 +11,7 @@ import { parseTaskFilters, parseTaskInput } from "@/server/tasks/validation";
 
 export const runtime = "nodejs";
 
-export async function GET(request: Request) {
+async function handleGET(request: Request) {
   try {
     const userId = await requireUserId(request);
     return json({ tasks: await listTasks(userId, parseTaskFilters(request)) });
@@ -19,7 +20,7 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   try {
     const userId = await requireUserId(request);
     requireAppOrigin(request);
@@ -36,3 +37,6 @@ export async function POST(request: Request) {
     return apiError(error);
   }
 }
+
+export const GET = withServerTiming(handleGET);
+export const POST = withServerTiming(handlePOST);

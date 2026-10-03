@@ -21,7 +21,7 @@ export interface ApiTask {
   positionProject: number;
 }
 
-interface ApiProject {
+export interface ApiProject {
   id: string;
   position: number;
   name: string;
@@ -205,6 +205,7 @@ export function buildOverview(
     }).format(new Date(overview.asOf)),
   );
   return {
+    allTasks: tasks,
     user,
     timezone,
     date,
@@ -251,6 +252,68 @@ export function buildOverview(
 
 export type OverviewData = ReturnType<typeof buildOverview>;
 
+/** Recalculate the view and sidebar from the saved task without another request. */
+export function updateOverviewTasks(
+  data: OverviewData,
+  tasks: ApiTask[],
+  asOf = new Date().toISOString(),
+): OverviewData {
+  const date = localDate(asOf, data.timezone);
+  const snapshot: OverviewResponse = {
+    timezone: data.timezone,
+    date,
+    asOf,
+    summary: {
+      totalTasks: tasks.length,
+      todayTasks: tasks.filter(
+        (t) =>
+          t.status !== "DONE" &&
+          t.dueAt &&
+          localDate(t.dueAt, data.timezone) === date,
+      ).length,
+      overdueTasks: tasks.filter(
+        (t) =>
+          t.status !== "DONE" && t.dueAt && new Date(t.dueAt) < new Date(asOf),
+      ).length,
+      completedTasks: tasks.filter((t) => t.status === "DONE").length,
+    },
+  };
+  const ordered = [...tasks].sort(
+    (a, b) =>
+      a.positionOverview - b.positionOverview || a.id.localeCompare(b.id),
+  );
+  return data.currentProject
+    ? buildProjectOverview(
+        data.user,
+        snapshot,
+        data.projects,
+        ordered,
+        data.currentProject.id,
+        [...tasks].sort(
+          (a, b) =>
+            a.positionProject - b.positionProject || a.id.localeCompare(b.id),
+        ),
+      )
+    : buildOverview(data.user, snapshot, data.projects, ordered);
+}
+
+export async function loadOverview(
+  signal?: AbortSignal,
+  fetcher: typeof fetch = fetch,
+  projectId?: string,
+): Promise<OverviewData> {
+  const path =
+    "/api/workspace" +
+    (projectId ? `?${new URLSearchParams({ projectId })}` : "");
+  const response = await fetcher(path, {
+    credentials: "same-origin",
+    cache: "no-store",
+    signal,
+  });
+  if (!response.ok) throw new OverviewRequestError(response.status);
+  return response.json();
+}
+
 export function buildProjectOverview(
   user: OverviewUser,
   overview: OverviewResponse,
@@ -270,6 +333,7 @@ export function buildProjectOverview(
   );
   return {
     ...scoped,
+    allTasks,
     projects: sidebar.projects,
     currentProject,
     summary: {
@@ -285,41 +349,4 @@ export function buildProjectOverview(
       completedTasks: scoped.tasks.filter((task) => task.completed).length,
     },
   };
-}
-
-export async function loadOverview(
-  signal?: AbortSignal,
-  fetcher: typeof fetch = fetch,
-  projectId?: string,
-): Promise<OverviewData> {
-  async function get<T>(path: string): Promise<T> {
-    const response = await fetcher(path, {
-      credentials: "same-origin",
-      cache: "no-store",
-      signal,
-    });
-    if (!response.ok) throw new OverviewRequestError(response.status);
-    return response.json();
-  }
-  const [me, overview, projects, tasks, projectTasks] = await Promise.all([
-    get<{ user: OverviewUser }>("/api/me"),
-    get<OverviewResponse>("/api/overview"),
-    get<{ projects: ApiProject[] }>("/api/projects"),
-    get<{ tasks: ApiTask[] }>("/api/tasks"),
-    projectId
-      ? get<{ tasks: ApiTask[] }>(
-          `/api/tasks?${new URLSearchParams({ projectId })}`,
-        )
-      : Promise.resolve(undefined),
-  ]);
-  if (projectId && projectTasks)
-    return buildProjectOverview(
-      me.user,
-      overview,
-      projects.projects,
-      tasks.tasks,
-      projectId,
-      projectTasks.tasks,
-    );
-  return buildOverview(me.user, overview, projects.projects, tasks.tasks);
 }

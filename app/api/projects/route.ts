@@ -1,3 +1,4 @@
+import { withServerTiming } from "@/server/timing";
 import {
   apiError,
   json,
@@ -13,7 +14,7 @@ import {
 
 export const runtime = "nodejs";
 
-export async function GET(request: Request) {
+async function handleGET(request: Request) {
   try {
     const userId = await requireUserId(request);
     const projects = await listProjects(userId, parseArchiveFilter(request));
@@ -23,7 +24,7 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   try {
     const userId = await requireUserId(request);
     requireAppOrigin(request);
@@ -34,3 +35,6 @@ export async function POST(request: Request) {
     return apiError(error);
   }
 }
+
+export const GET = withServerTiming(handleGET);
+export const POST = withServerTiming(handlePOST);

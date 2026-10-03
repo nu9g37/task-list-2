@@ -17,7 +17,7 @@ interface TaskFormProps {
   open: boolean;
   projects: OverviewProject[];
   onClose: () => void;
-  onCreated: () => void;
+  onCreated: (task: ApiTask) => void;
 }
 
 export function TaskForm({
@@ -103,9 +103,10 @@ export function TaskForm({
         );
         return;
       }
+      const result: { task: ApiTask } = await response.json();
       formRef.current?.reset();
       onClose();
-      onCreated();
+      onCreated(result.task);
     } catch {
       setError("Could not connect. Check your connection and try again.");
     } finally {
