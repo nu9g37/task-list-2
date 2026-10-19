@@ -406,12 +406,6 @@
 .header {
   flex-shrink: 0;
 }
-.mobileTitle {
-  display: none;
-}
-.mobileNavigation {
-  display: none;
-}
 .header {
   height: 72px;
   padding: 0 40px;
@@ -1108,18 +1102,7 @@
     display: none;
   }
   .menuButton {
-    display: none;
-  }
-  .mobileTitle {
-    display: block;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    margin: 0;
-    color: #1f2024;
-    font-size: 20px;
-    line-height: 26px;
-    font-weight: 600;
+    display: grid;
   }
   .breadcrumb {
     display: none;
@@ -1129,15 +1112,13 @@
   }
   .header {
     height: 60px;
-    position: relative;
-    justify-content: center;
-    padding-inline: 12px;
+    padding-inline: 20px;
     gap: 12px;
-    background: #f2f2f7;
-    border-bottom: 0;
   }
   .headerActions {
-    display: none;
+    flex: 1;
+    min-width: 0;
+    gap: 12px;
   }
   .search {
     width: 100%;
@@ -1148,51 +1129,6 @@
   }
   .main {
     padding: 24px 20px 32px;
-  }
-  .mobileNavigation {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    flex: 0 0 auto;
-    height: calc(60px + env(safe-area-inset-bottom, 20px));
-    min-height: 80px;
-    box-sizing: border-box;
-    padding-bottom: env(safe-area-inset-bottom, 20px);
-    background: #f2f2f7;
-  }
-  .mobileNavItem {
-    min-width: 0;
-    height: 60px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 4px;
-    padding: 12px 0 0;
-    border: 0;
-    background: transparent;
-    color: #1f2024;
-    opacity: 0.5;
-    text-decoration: none;
-    font: inherit;
-    font-size: 12px;
-    line-height: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .mobileNavIcon {
-    width: 64px;
-    height: 32px;
-    display: grid;
-    place-items: center;
-    border-radius: 18px;
-  }
-  .mobileNavActive {
-    color: #111216;
-    opacity: 1;
-  }
-  .mobileNavActive .mobileNavIcon {
-    background: white;
   }
   .greeting {
     margin-bottom: 24px;

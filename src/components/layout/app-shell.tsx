@@ -3,9 +3,6 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { AppHeader } from "./app-header";
 import { AppSidebar } from "./app-sidebar";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Icon } from "@/components/ui/icon";
 import styles from "@/features/overview/components/overview.module.css";
 import type {
   OverviewProject,
@@ -20,7 +17,6 @@ export function AppShell({
   onAddProject,
   activeProjectId,
   onOpenProfile,
-  profileActive = false,
 }: {
   children: ReactNode;
   pageTitle: string;
@@ -29,18 +25,10 @@ export function AppShell({
   onAddProject?: () => void;
   activeProjectId?: string;
   onOpenProfile?: () => void;
-  profileActive?: boolean;
 }) {
   const drawerRef = useRef<HTMLDialogElement>(null);
   const drawerId = useId();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const pathname = usePathname();
-  const calendarActive = pathname === "/calendar";
-  const mobileTitle = profileActive
-    ? "Profile"
-    : calendarActive
-      ? "Calendar"
-      : "Home";
   const closeSidebar = () => drawerRef.current?.close();
 
   useEffect(() => {
@@ -98,7 +86,6 @@ export function AppShell({
       <div className={styles.workspace}>
         <AppHeader
           pageTitle={pageTitle}
-          mobileTitle={mobileTitle}
           sidebarId={drawerId}
           sidebarOpen={sidebarOpen}
           onOpenSidebar={() => {
@@ -107,41 +94,6 @@ export function AppShell({
           }}
         />
         <main className={styles.main}>{children}</main>
-        <nav className={styles.mobileNavigation} aria-label="Main navigation">
-          <Link
-            href="/"
-            className={`${styles.mobileNavItem} ${!calendarActive && !profileActive ? styles.mobileNavActive : ""}`}
-            aria-current={
-              !calendarActive && !profileActive ? "page" : undefined
-            }
-          >
-            <span className={styles.mobileNavIcon}>
-              <Icon name="home" size={24} strokeWidth={2.4} />
-            </span>
-            <span>Home</span>
-          </Link>
-          <Link
-            href="/calendar"
-            className={`${styles.mobileNavItem} ${calendarActive ? styles.mobileNavActive : ""}`}
-            aria-current={calendarActive ? "page" : undefined}
-          >
-            <span className={styles.mobileNavIcon}>
-              <Icon name="calendar" size={24} strokeWidth={2.4} />
-            </span>
-            <span>Calendar</span>
-          </Link>
-          <button
-            type="button"
-            className={`${styles.mobileNavItem} ${profileActive ? styles.mobileNavActive : ""}`}
-            aria-pressed={profileActive}
-            onClick={onOpenProfile}
-          >
-            <span className={styles.mobileNavIcon}>
-              <Icon name="profile" size={24} strokeWidth={2.4} />
-            </span>
-            <span>Profile</span>
-          </button>
-        </nav>
       </div>
     </div>
   );

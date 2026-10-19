@@ -6,13 +6,11 @@ import styles from "@/features/overview/components/overview.module.css";
 
 export function AppHeader({
   pageTitle,
-  mobileTitle,
   sidebarId,
   sidebarOpen,
   onOpenSidebar,
 }: {
   pageTitle: string;
-  mobileTitle: string;
   sidebarId: string;
   sidebarOpen: boolean;
   onOpenSidebar: () => void;
@@ -20,7 +18,6 @@ export function AppHeader({
   const { search, setSearch } = useWorkspace();
   return (
     <header className={styles.header}>
-      <h1 className={styles.mobileTitle}>{mobileTitle}</h1>
       <div className={styles.headerLeading}>
         <button
           type="button"

@@ -143,13 +143,12 @@ export function WorkspaceLayout({ children }: { children: ReactNode }) {
       }}
     >
       <AppShell
-        pageTitle={profileOpen ? "Profile" : title}
+        pageTitle={title}
         activeProjectId={activeProjectId}
         user={sidebar.user}
         projects={sidebar.projects}
         onAddProject={() => setProjectFormOpen(true)}
         onOpenProfile={() => setProfileOpen(true)}
-        profileActive={profileOpen}
       >
         {children}
         {projectFormOpen && (
