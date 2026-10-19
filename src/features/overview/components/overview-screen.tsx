@@ -158,7 +158,7 @@ export function OverviewScreen({
             />
             <FocusPanel data={visibleData!} />
           </div>
-          {!projectId && <ProjectCards projects={data.projects} />}
+          {/* {!projectId && <ProjectCards projects={data.projects} />} */}
           {taskFormOpen && (
             <TaskForm
               open

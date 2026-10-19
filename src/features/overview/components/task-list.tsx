@@ -4,6 +4,11 @@ import { useRef, useState } from "react";
 import { Icon } from "@/components/ui/icon";
 import type { OverviewTask } from "@/features/overview/data";
 import { TaskRow } from "./task-row";
+import {
+  EMPTY_TASK_FILTER,
+  TaskFilter,
+  type TaskFilterValue,
+} from "./task-filter";
 import styles from "./overview.module.css";
 
 export function TaskList({
@@ -24,6 +29,7 @@ export function TaskList({
   onReorder: (taskIds: string[]) => Promise<void>;
 }) {
   const [activeTab, setActiveTab] = useState<"all" | "today" | "done">("all");
+  const [filter, setFilter] = useState<TaskFilterValue>(EMPTY_TASK_FILTER);
   const [updating, setUpdating] = useState<{
     id: string;
     completed: boolean;
@@ -40,8 +46,12 @@ export function TaskList({
   } | null>(null);
   const busy = !!updating || order !== null;
   const unfinishedTasks = tasks.filter((task) => !task.completed);
+  const filtering = filter.priorities.length > 0 || filter.sortBy !== "default";
   const canReorder =
-    activeTab === "all" && !searching && unfinishedTasks.length > 1;
+    activeTab === "all" &&
+    !searching &&
+    !filtering &&
+    unfinishedTasks.length > 1;
 
   async function move(id: string, index: number) {
     if (!canReorder || busy || saving.current) return;
@@ -104,20 +114,44 @@ export function TaskList({
   const orderedTasks = order
     ? order.flatMap((id) => tasks.filter((task) => task.id === id))
     : tasks;
-  const visibleTasks = orderedTasks.filter((task) =>
-    activeTab === "all"
-      ? !task.completed
+  const priorityRank = { HIGH: 0, MEDIUM: 1, LOW: 2 } as const;
+  const visibleTasks = orderedTasks
+    .filter((task) =>
+      activeTab === "all"
+        ? !task.completed
+        : activeTab === "today"
+          ? task.dueToday
+          : task.completed,
+    )
+    .filter(
+      (task) =>
+        !filter.priorities.length ||
+        filter.priorities.some(
+          (priority) => priority.toUpperCase() === task.source.priority,
+        ),
+    );
+  if (filter.sortBy !== "default") {
+    visibleTasks.sort((a, b) => {
+      if (filter.sortBy === "title") return a.title.localeCompare(b.title);
+      if (filter.sortBy === "priority")
+        return (
+          priorityRank[a.source.priority] - priorityRank[b.source.priority]
+        );
+      // Due date: earliest first, tasks without a deadline last.
+      const aDue = a.source.dueAt ? Date.parse(a.source.dueAt) : Infinity;
+      const bDue = b.source.dueAt ? Date.parse(b.source.dueAt) : Infinity;
+      return aDue === bDue ? 0 : aDue < bDue ? -1 : 1;
+    });
+  }
+  const emptyMessage = filtering
+    ? "No tasks match your filters in this view."
+    : searching
+      ? "No tasks match your search in this view."
       : activeTab === "today"
-        ? task.dueToday
-        : task.completed,
-  );
-  const emptyMessage = searching
-    ? "No tasks match your search in this view."
-    : activeTab === "today"
-      ? "No tasks due today. Enjoy a little breathing room."
-      : activeTab === "done"
-        ? "No completed tasks yet. One small step at a time."
-        : "No unfinished tasks. Add a new task to get started.";
+        ? "No tasks due today. Enjoy a little breathing room."
+        : activeTab === "done"
+          ? "No completed tasks yet. One small step at a time."
+          : "No unfinished tasks. Add a new task to get started.";
 
   return (
     <section className={styles.taskPanel} aria-labelledby="tasks-heading">
@@ -128,10 +162,7 @@ export function TaskList({
             <span className={styles.countBadge}>{visibleTasks.length}</span>
           </div>
           <div className={styles.taskActions}>
-            <button type="button" disabled className={styles.filterButton}>
-              <Icon name="filter" size={15} />
-              Filter
-            </button>
+            <TaskFilter value={filter} disabled={busy} onApply={setFilter} />
             <button
               type="button"
               className={styles.softButton}
