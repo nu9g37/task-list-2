@@ -51,7 +51,7 @@ DATABASE_URL=postgresql://YOUR_USER:YOUR_URL_ENCODED_PASSWORD@localhost:5432/YOU
 
 ชื่อผู้ใช้และพอร์ตดูจาก Connection ของ server ใน pgAdmin; รหัสผ่านที่มีอักขระพิเศษต้อง URL-encode
 
-Backend เตรียมไว้ที่ `db/index.ts`, `lib/auth.ts` และ `app/api/auth/[...all]/route.ts` ใช้ PostgreSQL driver โดยตรง, `emailAndPassword.enabled: true`, `requireEmailVerification: false` และ `timezone` ใน `user.additionalFields`
+Backend เตรียมไว้ที่ `src/server/db/index.ts`, `src/features/auth/lib/auth.ts` และ `src/app/api/auth/[...all]/route.ts` ใช้ PostgreSQL driver โดยตรง, `emailAndPassword.enabled: true`, `requireEmailVerification: false` และ `timezone` ใน `user.additionalFields`
 
 แก้ `DATABASE_URL` ใน `.env.local` เป็นค่าจริง โดยรักษา `BETTER_AUTH_SECRET` ที่สร้างไว้ จากนั้น:
 

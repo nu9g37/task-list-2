@@ -1,0 +1,29 @@
+import type { Project } from "@/features/projects/model";
+import type { User } from "@/features/auth/models/user";
+
+export const TASK_STATUSES = ["TODO", "DONE"] as const;
+export type TaskStatus = (typeof TASK_STATUSES)[number];
+
+export const TASK_PRIORITIES = ["LOW", "MEDIUM", "HIGH"] as const;
+export type TaskPriority = (typeof TASK_PRIORITIES)[number];
+
+export interface Task {
+  id: string;
+  userId: User["id"];
+  /** Null means a personal task without a project. */
+  projectId: Project["id"] | null;
+  title: string;
+  description: string | null;
+  status: TaskStatus;
+  priority: TaskPriority;
+  /** Deadline date AND time; null means unscheduled. Display in User.timezone. */
+  dueAt: Date | null;
+  /** Set when status is DONE; clear when reopening the task. */
+  completedAt: Date | null;
+  /** Order across all tasks owned by the user in overview. */
+  positionOverview: number;
+  /** Order within the project or personal task list, independent of overview. */
+  positionProject: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
