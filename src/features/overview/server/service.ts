@@ -14,13 +14,23 @@ interface OverviewRow {
 }
 
 export async function getOverview(userId: string) {
+  try {
+    return await queryOverview(userId, null);
+  } catch (error) {
+    // 22023 = invalid_parameter_value, e.g. a legacy row with an unknown zone.
+    // Avoid pg_timezone_names: it re-reads the tz database on every query.
+    if ((error as { code?: string }).code !== "22023") throw error;
+    return queryOverview(userId, "UTC");
+  }
+}
+
+async function queryOverview(userId: string, timezoneOverride: string | null) {
   // One statement gives all counters the same database snapshot and clock.
   // Convert each local midnight separately so DST days need not be 24 hours.
   const result = await getDb().query<OverviewRow>(
     `WITH settings AS (
-      SELECT COALESCE(
-        (SELECT name FROM pg_timezone_names WHERE name = u."timezone"), 'UTC'
-      ) AS timezone, now() AS instant
+      SELECT COALESCE($2::text, NULLIF(u."timezone", ''), 'UTC') AS timezone,
+        now() AS instant
       FROM public."user" u WHERE u."id" = $1
     ), local_day AS (
       SELECT *, (instant AT TIME ZONE timezone)::date AS day FROM settings
@@ -40,7 +50,7 @@ export async function getOverview(userId: string) {
       COUNT(t."id") FILTER (WHERE t.status = 'DONE')::integer AS "completedTasks"
     FROM bounds b LEFT JOIN visible_tasks t ON true
     GROUP BY b.timezone, b.day, b.instant`,
-    [userId],
+    [userId, timezoneOverride],
   );
   const row = result.rows[0];
   if (!row) throw new ApiError(401, "Unauthorized");
