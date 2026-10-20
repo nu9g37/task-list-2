@@ -1,10 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import type {
-  ApiProject,
-  OverviewProject,
-} from "@/features/overview/data";
+import type { ApiProject, OverviewProject } from "@/features/overview/data";
 import { Icon } from "@/components/ui/icon";
 import styles from "@/features/tasks/components/task-form.module.css";
 import colorStyles from "./project-form.module.css";

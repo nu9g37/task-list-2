@@ -210,8 +210,8 @@ export function TaskList({
                     ? styles.taskDragSource
                     : dragging.index === index
                       ? visibleTasks.findIndex(
-                        (row) => row.id === dragging.id,
-                      ) < index
+                          (row) => row.id === dragging.id,
+                        ) < index
                         ? styles.taskDropAfter
                         : styles.taskDropBefore
                       : ""

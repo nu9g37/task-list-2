@@ -28,7 +28,7 @@ export interface ApiProject {
   color: string;
   description?: string | null;
 }
-export interface OverviewResponse {
+interface OverviewResponse {
   timezone: string;
   date: string;
   asOf: string;

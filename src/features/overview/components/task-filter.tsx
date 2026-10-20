@@ -4,9 +4,9 @@ import { useEffect, useId, useRef, useState } from "react";
 import { Icon } from "@/components/ui/icon";
 import styles from "./task-filter.module.css";
 
-export type PriorityFilter = "High" | "Medium" | "Low";
+type PriorityFilter = "High" | "Medium" | "Low";
 
-export type TaskSort = "default" | "dueDate" | "priority" | "title";
+type TaskSort = "default" | "dueDate" | "priority" | "title";
 
 export interface TaskFilterValue {
   priorities: PriorityFilter[];

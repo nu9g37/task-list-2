@@ -3,10 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Icon } from "@/components/ui/icon";
 import { taskDateTime, taskDueAt } from "@/lib/timezone";
-import type {
-  ApiTask,
-  OverviewProject,
-} from "@/features/overview/data";
+import type { ApiTask, OverviewProject } from "@/features/overview/data";
 import styles from "./task-form.module.css";
 
 interface TaskFormProps {

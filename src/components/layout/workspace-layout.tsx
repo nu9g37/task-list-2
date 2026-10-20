@@ -19,7 +19,7 @@ import type {
   OverviewUser,
 } from "@/features/overview/data";
 
-export type ProjectChange = { project: ApiProject } | { order: string[] };
+type ProjectChange = { project: ApiProject } | { order: string[] };
 
 const WorkspaceContext = createContext<{
   revision: number;

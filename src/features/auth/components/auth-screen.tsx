@@ -124,7 +124,6 @@ export function AuthScreen({ mode }: { mode: "sign-in" | "sign-up" }) {
           </Link>
         </div>
         <div className={styles.formContent}>
-          {/* <div className={styles.formIcon}><Icon name={signingUp ? "plus" : "grid"} size={22} /></div> */}
           <h2 id="auth-heading">
             {signingUp ? "A fresh start." : "Welcome back."}
           </h2>

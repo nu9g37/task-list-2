@@ -60,7 +60,6 @@ export function PasswordForm({
       className={profileStyles.password}
       aria-label="Change password"
     >
-      {/* <h3 id="password-heading">Password</h3> */}
       <fieldset disabled={disabled}>
         <div className={styles.field}>
           <label htmlFor="current-password">Current password</label>

@@ -5,10 +5,7 @@ import Link from "next/link";
 import { SortableProjectList } from "@/features/projects/components/sortable-project-list";
 import { usePathname } from "next/navigation";
 import { Icon } from "@/components/ui/icon";
-import type {
-  OverviewProject,
-  OverviewUser,
-} from "@/features/overview/data";
+import type { OverviewProject, OverviewUser } from "@/features/overview/data";
 import styles from "@/features/overview/components/overview.module.css";
 
 export function AppSidebar({

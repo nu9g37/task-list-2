@@ -4,10 +4,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { AppHeader } from "./app-header";
 import { AppSidebar } from "./app-sidebar";
 import styles from "@/features/overview/components/overview.module.css";
-import type {
-  OverviewProject,
-  OverviewUser,
-} from "@/features/overview/data";
+import type { OverviewProject, OverviewUser } from "@/features/overview/data";
 
 export function AppShell({
   children,

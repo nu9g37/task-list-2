@@ -7,7 +7,6 @@ import { useWorkspace } from "@/components/layout/workspace-layout";
 import { searchOverview } from "@/features/tasks/search";
 import { Icon } from "@/components/ui/icon";
 import { FocusPanel } from "./focus-panel";
-import { ProjectCards } from "./project-cards";
 import { SummaryCards } from "./summary-cards";
 import { TaskList } from "./task-list";
 import { TaskForm } from "@/features/tasks/components/task-form";
@@ -158,7 +157,6 @@ export function OverviewScreen({
             />
             <FocusPanel data={visibleData!} />
           </div>
-          {/* {!projectId && <ProjectCards projects={data.projects} />} */}
           {taskFormOpen && (
             <TaskForm
               open

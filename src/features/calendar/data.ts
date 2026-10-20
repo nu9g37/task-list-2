@@ -1,7 +1,4 @@
-import type {
-  OverviewData,
-  ApiTask,
-} from "@/features/overview/data";
+import type { OverviewData, ApiTask } from "@/features/overview/data";
 
 export function shiftDay(day: string, amount: number) {
   const date = new Date(`${day}T12:00:00Z`);
