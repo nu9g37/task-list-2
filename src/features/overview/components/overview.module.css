@@ -1237,8 +1237,11 @@
   cursor: grabbing;
 }
 .taskDragHandle:disabled {
-  cursor: wait;
+  cursor: not-allowed;
   opacity: 0.5;
+}
+.tasks[aria-busy="true"] .taskDragHandle:disabled {
+  cursor: wait;
 }
 .taskDragSource {
   opacity: 0.45;

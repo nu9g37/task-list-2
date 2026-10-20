@@ -210,91 +210,90 @@ export function TaskList({
                     ? styles.taskDragSource
                     : dragging.index === index
                       ? visibleTasks.findIndex(
-                          (row) => row.id === dragging.id,
-                        ) < index
+                        (row) => row.id === dragging.id,
+                      ) < index
                         ? styles.taskDropAfter
                         : styles.taskDropBefore
                       : ""
                   : ""
               }
               reorderHandle={
-                canReorder ? (
-                  <button
-                    type="button"
-                    className={styles.taskDragHandle}
-                    disabled={busy}
-                    aria-label={`Reorder ${task.title}. Use Alt and Up or Down arrow.`}
-                    title="Drag to reorder, or use Alt + Up/Down"
-                    onPointerDown={(event) => {
-                      if (busy || event.button !== 0 || !event.isPrimary)
-                        return;
-                      event.currentTarget.setPointerCapture(event.pointerId);
-                      drag.current = { id: task.id, index };
-                      setDragging(drag.current);
-                    }}
-                    onPointerMove={(event) => {
-                      if (!drag.current || !list.current) return;
-                      const rows = Array.from(
-                        list.current.querySelectorAll<HTMLElement>(
-                          "[data-task-id]",
+                <button
+                  type="button"
+                  className={styles.taskDragHandle}
+                  disabled={busy || !canReorder}
+                  aria-label={`Reorder ${task.title}. Use Alt and Up or Down arrow.`}
+                  title={
+                    canReorder
+                      ? "Drag to reorder, or use Alt + Up/Down"
+                      : "Reordering is only available in the default order"
+                  }
+                  onPointerDown={(event) => {
+                    if (busy || event.button !== 0 || !event.isPrimary) return;
+                    event.currentTarget.setPointerCapture(event.pointerId);
+                    drag.current = { id: task.id, index };
+                    setDragging(drag.current);
+                  }}
+                  onPointerMove={(event) => {
+                    if (!drag.current || !list.current) return;
+                    const rows = Array.from(
+                      list.current.querySelectorAll<HTMLElement>(
+                        "[data-task-id]",
+                      ),
+                    );
+                    const target = rows.findIndex(
+                      (row) =>
+                        event.clientY < row.getBoundingClientRect().bottom,
+                    );
+                    const next = target < 0 ? rows.length - 1 : target;
+                    drag.current = { ...drag.current, index: next };
+                    setDragging(drag.current);
+                    const bounds = list.current.getBoundingClientRect();
+                    if (event.clientY < bounds.top + 32)
+                      list.current.scrollTop -= 16;
+                    if (event.clientY > bounds.bottom - 32)
+                      list.current.scrollTop += 16;
+                  }}
+                  onPointerUp={(event) => {
+                    const current = drag.current;
+                    drag.current = null;
+                    setDragging(null);
+                    event.currentTarget.releasePointerCapture(event.pointerId);
+                    if (current) void move(current.id, current.index);
+                  }}
+                  onLostPointerCapture={() => {
+                    drag.current = null;
+                    setDragging(null);
+                  }}
+                  onPointerCancel={() => {
+                    drag.current = null;
+                    setDragging(null);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") {
+                      drag.current = null;
+                      setDragging(null);
+                    }
+                    if (
+                      event.altKey &&
+                      ["ArrowUp", "ArrowDown"].includes(event.key)
+                    ) {
+                      event.preventDefault();
+                      void move(
+                        task.id,
+                        Math.max(
+                          0,
+                          Math.min(
+                            visibleTasks.length - 1,
+                            index + (event.key === "ArrowUp" ? -1 : 1),
+                          ),
                         ),
                       );
-                      const target = rows.findIndex(
-                        (row) =>
-                          event.clientY < row.getBoundingClientRect().bottom,
-                      );
-                      const next = target < 0 ? rows.length - 1 : target;
-                      drag.current = { ...drag.current, index: next };
-                      setDragging(drag.current);
-                      const bounds = list.current.getBoundingClientRect();
-                      if (event.clientY < bounds.top + 32)
-                        list.current.scrollTop -= 16;
-                      if (event.clientY > bounds.bottom - 32)
-                        list.current.scrollTop += 16;
-                    }}
-                    onPointerUp={(event) => {
-                      const current = drag.current;
-                      drag.current = null;
-                      setDragging(null);
-                      event.currentTarget.releasePointerCapture(
-                        event.pointerId,
-                      );
-                      if (current) void move(current.id, current.index);
-                    }}
-                    onLostPointerCapture={() => {
-                      drag.current = null;
-                      setDragging(null);
-                    }}
-                    onPointerCancel={() => {
-                      drag.current = null;
-                      setDragging(null);
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === "Escape") {
-                        drag.current = null;
-                        setDragging(null);
-                      }
-                      if (
-                        event.altKey &&
-                        ["ArrowUp", "ArrowDown"].includes(event.key)
-                      ) {
-                        event.preventDefault();
-                        void move(
-                          task.id,
-                          Math.max(
-                            0,
-                            Math.min(
-                              visibleTasks.length - 1,
-                              index + (event.key === "ArrowUp" ? -1 : 1),
-                            ),
-                          ),
-                        );
-                      }
-                    }}
-                  >
-                    <Icon name="menu" size={18} />
-                  </button>
-                ) : undefined
+                    }
+                  }}
+                >
+                  <Icon name="menu" size={18} />
+                </button>
               }
               checked={
                 updating?.id === task.id ? updating.completed : task.completed
