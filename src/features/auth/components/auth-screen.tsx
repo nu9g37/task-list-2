@@ -57,7 +57,11 @@ export function AuthScreen({ mode }: { mode: "sign-in" | "sign-up" }) {
     <main className={styles.page}>
       <aside className={styles.story} aria-label="About Tasklist 2">
         <Link href="/" className={styles.brand}>
-          <span className={styles.logo}>T</span>Tasklist 2
+          <span className={styles.logo}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.svg" alt="" />
+          </span>
+          Tasklist 2
         </Link>
         <div className={styles.storyContent}>
           <span className={styles.eyebrow}>

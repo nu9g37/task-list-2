@@ -44,7 +44,11 @@ export function AppSidebar({
   return (
     <aside className={styles.sidebar} aria-label="Workspace sidebar">
       <div className={styles.brand}>
-        <span className={styles.logo}>T</span>
+        <span className={styles.logo}>
+          {/* Static brand mark from public/logo.svg (same artwork as app/icon.svg). */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.svg" alt="" />
+        </span>
         <span>Tasklist 2</span>
         {onClose && (
           <button

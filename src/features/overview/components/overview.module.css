@@ -84,10 +84,10 @@
   width: 40px;
   height: 40px;
   border-radius: 12px;
-  background: var(--green);
-  color: white;
-  font-size: 24px;
-  font-weight: 500;
+}
+.logo img {
+  width: 100%;
+  height: 100%;
 }
 .brand {
   flex-shrink: 0;
