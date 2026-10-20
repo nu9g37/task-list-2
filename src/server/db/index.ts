@@ -12,9 +12,12 @@ export function getDb(): Pool {
   if (!globalForDb.tasklistPool) {
     globalForDb.tasklistPool = new Pool({
       connectionString: requireEnv("DATABASE_URL"),
-      max: 5,
-      connectionTimeoutMillis: 5_000,
-      idleTimeoutMillis: 30_000,
+      // Serverless: each instance handles few concurrent queries, and Neon's
+      // pooler (PgBouncer) multiplexes connections, so keep this small.
+      max: process.env.VERCEL ? 2 : 5,
+      // Allow for a Neon free-tier cold start (compute resuming from suspend).
+      connectionTimeoutMillis: 10_000,
+      idleTimeoutMillis: 10_000,
     });
     globalForDb.tasklistPool.on("error", () => {
       console.error("An idle PostgreSQL connection failed.");
