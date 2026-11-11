@@ -11,18 +11,27 @@ type TaskSort = "default" | "dueDate" | "priority" | "title";
 export interface TaskFilterValue {
   priorities: PriorityFilter[];
   sortBy: TaskSort;
+  sortDir: SortDirection;
 }
+
+export type SortDirection = "asc" | "desc";
 
 export const EMPTY_TASK_FILTER: TaskFilterValue = {
   priorities: [],
   sortBy: "default",
+  sortDir: "asc",
 };
+
+const DIRECTION_OPTIONS: { id: SortDirection; label: string }[] = [
+  { id: "asc", label: "Asc." },
+  { id: "desc", label: "Desc." },
+];
 
 const SORT_OPTIONS: { id: TaskSort; label: string }[] = [
   { id: "default", label: "Default order" },
   { id: "dueDate", label: "Due date" },
   { id: "priority", label: "Priority" },
-  { id: "title", label: "Title (A-Z)" },
+  { id: "title", label: "Title" },
 ];
 
 const PRIORITIES: PriorityFilter[] = ["High", "Medium", "Low"];
@@ -133,6 +142,28 @@ export function TaskFilter({
                     aria-pressed={selected}
                     className={`${styles.chip} ${selected ? styles.chipSelected : ""}`}
                     onClick={() => setDraft({ ...draft, sortBy: option.id })}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+          <fieldset
+            className={styles.group}
+            disabled={draft.sortBy === "default"}
+          >
+            <legend>Direction</legend>
+            <div className={styles.chips}>
+              {DIRECTION_OPTIONS.map((option) => {
+                const selected = draft.sortDir === option.id;
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    aria-pressed={selected}
+                    className={`${styles.chip} ${selected ? styles.chipSelected : ""}`}
+                    onClick={() => setDraft({ ...draft, sortDir: option.id })}
                   >
                     {option.label}
                   </button>

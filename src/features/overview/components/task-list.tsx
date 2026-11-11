@@ -131,16 +131,23 @@ export function TaskList({
         ),
     );
   if (filter.sortBy !== "default") {
+    const dir = filter.sortDir === "desc" ? -1 : 1;
     visibleTasks.sort((a, b) => {
-      if (filter.sortBy === "title") return a.title.localeCompare(b.title);
+      if (filter.sortBy === "title")
+        return dir * a.title.localeCompare(b.title);
       if (filter.sortBy === "priority")
         return (
-          priorityRank[a.source.priority] - priorityRank[b.source.priority]
+          dir *
+          (priorityRank[a.source.priority] - priorityRank[b.source.priority])
         );
-      // Due date: earliest first, tasks without a deadline last.
-      const aDue = a.source.dueAt ? Date.parse(a.source.dueAt) : Infinity;
-      const bDue = b.source.dueAt ? Date.parse(b.source.dueAt) : Infinity;
-      return aDue === bDue ? 0 : aDue < bDue ? -1 : 1;
+      // Due date: asc = earliest first, desc = latest first; tasks without a
+      // deadline always go last.
+      const aDue = a.source.dueAt ? Date.parse(a.source.dueAt) : null;
+      const bDue = b.source.dueAt ? Date.parse(b.source.dueAt) : null;
+      if (aDue === bDue) return 0;
+      if (aDue === null) return 1;
+      if (bDue === null) return -1;
+      return dir * (aDue - bDue);
     });
   }
   const emptyMessage = filtering
