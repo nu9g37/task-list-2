@@ -1156,6 +1156,8 @@
   }
   .taskToolbar {
     flex-wrap: wrap;
+    /* Anchor the filter popover to the toolbar so it can't overflow the card's left edge. */
+    position: relative;
   }
   .taskActions {
     margin-left: auto;
