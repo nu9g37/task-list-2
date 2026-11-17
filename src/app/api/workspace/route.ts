@@ -12,8 +12,11 @@ async function handleGET(request: Request) {
       getAuth().api.getSession({ headers: request.headers }),
     );
     if (!session) throw new ApiError(401, "Unauthorized");
-    const projectId =
-      new URL(request.url).searchParams.get("projectId") ?? undefined;
+    const rawProjectId = new URL(request.url).searchParams.get("projectId");
+    if (rawProjectId !== null && !rawProjectId.trim()) {
+      throw new ApiError(400, "projectId must be a non-empty string");
+    }
+    const projectId = rawProjectId?.trim() || undefined;
     const data = await getWorkspace(
       {
         ...session.user,

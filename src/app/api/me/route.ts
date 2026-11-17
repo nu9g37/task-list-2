@@ -1,38 +1,29 @@
 import { getAuth } from "@/features/auth/lib/auth";
-import { ConfigurationError } from "@/lib/env";
+import { apiError, ApiError, json } from "@/lib/api";
+import { measure, withServerTiming } from "@/lib/timing";
 
 export const runtime = "nodejs";
 
-export async function GET(request: Request) {
-  const headers = { "Cache-Control": "no-store" };
+async function handleGET(request: Request) {
   try {
-    const session = await getAuth().api.getSession({
-      headers: request.headers,
-    });
-    if (!session) {
-      return Response.json({ error: "Unauthorized" }, { status: 401, headers });
-    }
-    const { user } = session;
-    return Response.json(
-      {
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          emailVerified: user.emailVerified,
-          image: user.image ?? null,
-          timezone: user.timezone ?? "UTC",
-        },
-      },
-      { headers },
+    const session = await measure("auth", () =>
+      getAuth().api.getSession({ headers: request.headers }),
     );
+    if (!session) throw new ApiError(401, "Unauthorized");
+    const { user } = session;
+    return json({
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        emailVerified: user.emailVerified,
+        image: user.image ?? null,
+        timezone: user.timezone ?? "UTC",
+      },
+    });
   } catch (error) {
-    if (error instanceof ConfigurationError) {
-      return Response.json(
-        { error: "Configure the backend environment in .env.local." },
-        { status: 503, headers },
-      );
-    }
-    throw error;
+    return apiError(error);
   }
 }
+
+export const GET = withServerTiming(handleGET);

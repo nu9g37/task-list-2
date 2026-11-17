@@ -193,14 +193,29 @@ export function ProfileForm({
                 void changeImage(file);
               }}
             />
-            <button
-              type="button"
-              className={profileStyles.changeImage}
-              onClick={() => fileRef.current?.click()}
-              aria-label="Change profile image"
-            >
-              {readingImage ? "Preparing…" : "Change"}
-            </button>
+            <div className={profileStyles.photoActions}>
+              <button
+                type="button"
+                className={profileStyles.changeImage}
+                onClick={() => fileRef.current?.click()}
+                aria-label="Change profile image"
+              >
+                {readingImage ? "Preparing…" : "Change"}
+              </button>
+              {image.trim() && (
+                <button
+                  type="button"
+                  className={profileStyles.removeImage}
+                  onClick={() => {
+                    setImage("");
+                    setFailedImage(undefined);
+                    setImageError("");
+                  }}
+                >
+                  Remove
+                </button>
+              )}
+            </div>
             <small className={profileStyles.imageHint}>
               JPG, PNG or WebP · Up to 5 MB
             </small>

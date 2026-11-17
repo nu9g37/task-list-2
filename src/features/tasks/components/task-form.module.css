@@ -136,6 +136,14 @@
   border-color: var(--green);
   box-shadow: 0 0 0 3px #e1eee5;
 }
+.field input:disabled,
+.field textarea:disabled,
+.field select:disabled {
+  background: var(--sidebar);
+  color: var(--muted);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
 .field input::placeholder,
 .field textarea::placeholder {
   color: #a1aaa3;

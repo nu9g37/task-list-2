@@ -1,3 +1,5 @@
+import { MAX_USER_IMAGE_DATA_URL_LENGTH } from "@/features/auth/lib/user-validation";
+
 export async function readProfileImage(file: File): Promise<string> {
   if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
     throw new Error("Please choose a JPG, PNG, or WebP image.");
@@ -31,7 +33,11 @@ export async function readProfileImage(file: File): Promise<string> {
       256,
     );
     // Keep the avatar small enough to persist in the existing user image field.
-    return canvas.toDataURL("image/jpeg", 0.8);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+    if (dataUrl.length <= MAX_USER_IMAGE_DATA_URL_LENGTH) return dataUrl;
+    const compactUrl = canvas.toDataURL("image/jpeg", 0.5);
+    if (compactUrl.length <= MAX_USER_IMAGE_DATA_URL_LENGTH) return compactUrl;
+    throw new Error("Profile image is too large. Please choose another file.");
   } finally {
     bitmap.close();
   }

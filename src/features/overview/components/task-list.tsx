@@ -48,7 +48,8 @@ export function TaskList({
   } | null>(null);
   const busy = !!updating || order !== null;
   const unfinishedTasks = tasks.filter((task) => !task.completed);
-  const filtering = filter.priorities.length > 0 || filter.sortBy !== "default";
+  const hasPriorityFilter = filter.priorities.length > 0;
+  const filtering = hasPriorityFilter || filter.sortBy !== "default";
   const canReorder =
     activeTab === "all" &&
     !searching &&
@@ -152,7 +153,7 @@ export function TaskList({
       return dir * (aDue - bDue);
     });
   }
-  const emptyMessage = filtering
+  const emptyMessage = hasPriorityFilter
     ? "No tasks match your filters in this view."
     : searching
       ? "No tasks match your search in this view."
@@ -259,8 +260,10 @@ export function TaskList({
                         event.clientY < row.getBoundingClientRect().bottom,
                     );
                     const next = target < 0 ? rows.length - 1 : target;
-                    drag.current = { ...drag.current, index: next };
-                    setDragging({ id: drag.current.id, index: next });
+                    if (next !== drag.current.index) {
+                      drag.current = { ...drag.current, index: next };
+                      setDragging({ id: drag.current.id, index: next });
+                    }
                     const bounds = list.current.getBoundingClientRect();
                     if (event.clientY < bounds.top + 32)
                       list.current.scrollTop -= 16;

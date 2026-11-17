@@ -23,8 +23,17 @@ export async function requireUserId(request: Request): Promise<string> {
 
 /** Cookie-authenticated mutations must originate from the configured app. */
 export function requireAppOrigin(request: Request): void {
+  const configuredUrl = requireEnv("BETTER_AUTH_URL");
+  let expectedOrigin: string;
+  try {
+    expectedOrigin = new URL(configuredUrl).origin;
+  } catch {
+    throw new ConfigurationError(
+      "Configure a valid BETTER_AUTH_URL in .env.local.",
+    );
+  }
   const origin = request.headers.get("origin");
-  if (origin !== new URL(requireEnv("BETTER_AUTH_URL")).origin) {
+  if (origin !== expectedOrigin) {
     throw new ApiError(403, "Invalid request origin");
   }
 }

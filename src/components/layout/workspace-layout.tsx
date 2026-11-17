@@ -41,6 +41,17 @@ export function useWorkspace() {
   return workspace;
 }
 
+function decodeProjectSegment(pathname: string): string | undefined {
+  if (!pathname.startsWith("/projects/")) return undefined;
+  const segment = pathname.split("/")[2];
+  if (!segment) return undefined;
+  try {
+    return decodeURIComponent(segment) || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export function WorkspaceLayout({
   children,
   initialUser,
@@ -56,9 +67,7 @@ export function WorkspaceLayout({
   const search = searches[pathname] ?? "";
   const setSearch = (value: string) =>
     setSearches((previous) => ({ ...previous, [pathname]: value }));
-  const activeProjectId = pathname.startsWith("/projects/")
-    ? decodeURIComponent(pathname.split("/")[2])
-    : undefined;
+  const activeProjectId = decodeProjectSegment(pathname);
   const [sidebar, setSidebar] = useState<{
     user?: OverviewUser;
     projects: OverviewProject[];
@@ -83,6 +92,20 @@ export function WorkspaceLayout({
     [],
   );
   function saveProject(project: ApiProject) {
+    if (projectListeners.current.size === 0) {
+      setSidebar((previous) => {
+        const existing = previous.projects.find((p) => p.id === project.id);
+        const updated: OverviewProject = existing
+          ? { ...existing, ...project }
+          : { ...project, tasks: 0, remaining: 0, progress: 0 };
+        const projects = [
+          ...previous.projects.filter((p) => p.id !== project.id),
+          updated,
+        ].sort((a, b) => a.position - b.position || a.id.localeCompare(b.id));
+        return { ...previous, projects };
+      });
+      return;
+    }
     projectListeners.current.forEach((listener) => listener({ project }));
   }
   const publish = useCallback((data: OverviewData) => {

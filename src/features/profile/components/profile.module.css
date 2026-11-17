@@ -22,7 +22,13 @@
   height: 100%;
   object-fit: cover;
 }
-.changeImage {
+.photoActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.changeImage,
+.removeImage {
   border: 1px solid var(--border);
   border-radius: 8px;
   background: white;
@@ -32,10 +38,18 @@
   font-size: 12px;
   cursor: pointer;
 }
+.removeImage {
+  color: #a63f32;
+  border-color: #e7c4be;
+}
 .changeImage:hover {
   background: var(--sidebar);
 }
-.changeImage:disabled {
+.removeImage:hover {
+  background: #fff3f0;
+}
+.changeImage:disabled,
+.removeImage:disabled {
   opacity: 0.55;
   cursor: wait;
 }

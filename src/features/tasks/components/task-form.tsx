@@ -29,11 +29,13 @@ export function TaskForm({
 }: TaskFormProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const savingRef = useRef(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const localDue = task?.dueAt ? taskDateTime(task.dueAt, timezone) : null;
   const initialDate = task ? (localDue?.date ?? "") : (defaultDate ?? "");
   const initialTime = localDue?.time ?? "09:00";
+  const [hasDate, setHasDate] = useState(Boolean(initialDate));
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -43,15 +45,16 @@ export function TaskForm({
   }, [open]);
 
   function close() {
-    if (saving) return;
+    if (savingRef.current) return;
     setError("");
+    setHasDate(Boolean(initialDate));
     formRef.current?.reset();
     onClose();
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (saving) return;
+    if (savingRef.current) return;
     setError("");
     const values = new FormData(event.currentTarget);
     const title = String(values.get("title") ?? "").trim();
@@ -72,6 +75,7 @@ export function TaskForm({
       task && dueDate === initialDate && dueTime === initialTime
         ? task.dueAt
         : due;
+    savingRef.current = true;
     setSaving(true);
     try {
       const response = await fetch(
@@ -107,6 +111,7 @@ export function TaskForm({
     } catch {
       setError("Could not connect. Check your connection and try again.");
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   }
@@ -117,7 +122,7 @@ export function TaskForm({
       className={styles.dialog}
       onClose={close}
       onCancel={(event) => {
-        if (saving) event.preventDefault();
+        if (savingRef.current) event.preventDefault();
       }}
       aria-labelledby="task-form-heading"
       aria-describedby="task-form-description"
@@ -195,6 +200,7 @@ export function TaskForm({
                   name="dueDate"
                   type="date"
                   defaultValue={initialDate}
+                  onChange={(event) => setHasDate(Boolean(event.target.value))}
                 />
               </div>
               <div className={styles.field}>
@@ -204,6 +210,7 @@ export function TaskForm({
                   name="dueTime"
                   type="time"
                   defaultValue={initialTime}
+                  disabled={!hasDate}
                 />
               </div>
             </div>

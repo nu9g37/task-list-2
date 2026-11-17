@@ -143,7 +143,7 @@ export function AuthScreen({ mode }: { mode: "sign-in" | "sign-up" }) {
                     autoComplete="name"
                     placeholder="Your name"
                     required
-                    maxLength={100}
+                    maxLength={200}
                     pattern=".*\S.*"
                   />
                 </div>
@@ -239,7 +239,9 @@ export function AuthScreen({ mode }: { mode: "sign-in" | "sign-up" }) {
           </p>
         </div>
         <footer className={styles.footer}>
-          <span>© {new Date().getFullYear()} Tasklist 2</span>
+          <span suppressHydrationWarning>
+            © {new Date().getFullYear()} Tasklist 2
+          </span>
           <span>
             <span className={styles.statusDot} /> A calmer way to get things
             done

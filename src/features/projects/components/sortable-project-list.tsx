@@ -28,7 +28,7 @@ export function SortableProjectList({
   );
   const remaining = sorted.filter((project) => project.id !== drag?.id);
 
-  async function move(id: string, index: number) {
+  async function move(id: string, index: number, restoreFocus = false) {
     const ids = sorted.map((project) => project.id);
     const from = ids.indexOf(id);
     if (from < 0 || from === index) return;
@@ -37,6 +37,17 @@ export function SortableProjectList({
     setMessage("");
     try {
       await reorderProjects(ids);
+      if (restoreFocus) {
+        requestAnimationFrame(() => {
+          const row = Array.from(
+            list.current?.querySelectorAll<HTMLElement>("[data-project-id]") ??
+              [],
+          ).find((item) => item.dataset.projectId === id);
+          row?.querySelector<HTMLAnchorElement>("a")?.focus({
+            preventScroll: true,
+          });
+        });
+      }
     } catch (error) {
       setMessage(
         error instanceof Error
@@ -92,14 +103,13 @@ export function SortableProjectList({
                 />
               )}
               <div
+                data-project-id={project.id}
                 className={
                   isDragging
                     ? styles.projectDragSource
                     : styles.projectDraggable
                 }
                 draggable={!reordering && projects.length > 1}
-                tabIndex={projects.length > 1 ? 0 : undefined}
-                aria-label={`Reorder ${project.name}. Use Alt and Up or Down arrow.`}
                 onDragStart={(event) => {
                   if (
                     reordering ||
@@ -138,12 +148,14 @@ export function SortableProjectList({
                         from + (event.key === "ArrowUp" ? -1 : 1),
                       ),
                     ),
+                    true,
                   );
                 }}
               >
                 <ProjectNavItem
                   project={project}
                   active={activeProjectId === project.id}
+                  reorderable={projects.length > 1}
                   onCloseSidebar={onCloseSidebar}
                 />
               </div>

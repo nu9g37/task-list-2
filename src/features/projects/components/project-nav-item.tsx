@@ -10,10 +10,12 @@ import styles from "@/features/overview/components/overview.module.css";
 export function ProjectNavItem({
   project,
   active,
+  reorderable = false,
   onCloseSidebar,
 }: {
   project: OverviewProject;
   active: boolean;
+  reorderable?: boolean;
   onCloseSidebar?: () => void;
 }) {
   const menuId = useId();
@@ -46,6 +48,9 @@ export function ProjectNavItem({
         href={`/projects/${encodeURIComponent(project.id)}`}
         className={styles.projectNavItem}
         aria-current={active ? "page" : undefined}
+        aria-keyshortcuts={
+          reorderable ? "Alt+ArrowUp Alt+ArrowDown" : undefined
+        }
       >
         <span className={styles.dot} style={{ background: project.color }} />
         <span className={styles.projectNavName}>{project.name}</span>

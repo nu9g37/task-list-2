@@ -31,6 +31,18 @@ export function TaskRow({
       const menu = menuRef.current;
       if (!menu?.matches(":popover-open") || !triggerRef.current) return;
       const rect = triggerRef.current.getBoundingClientRect();
+      const listRect = triggerRef.current
+        .closest("ul")
+        ?.getBoundingClientRect();
+      if (
+        rect.bottom <= 0 ||
+        rect.top >= window.innerHeight ||
+        (listRect &&
+          (rect.bottom <= listRect.top || rect.top >= listRect.bottom))
+      ) {
+        menu.hidePopover();
+        return;
+      }
       menu.style.top = `${rect.top + menuOffset.current.top}px`;
       menu.style.left = `${rect.left + menuOffset.current.left}px`;
     }

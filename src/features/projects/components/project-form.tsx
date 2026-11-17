@@ -24,6 +24,7 @@ export function ProjectForm({
   project?: OverviewProject;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const savingRef = useRef(false);
   const [color, setColor] = useState<string>(project?.color ?? colors[0].value);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -31,15 +32,21 @@ export function ProjectForm({
     if (!dialog.current?.open) dialog.current?.showModal();
   }, []);
 
+  function close() {
+    if (savingRef.current) return;
+    onClose();
+  }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (saving) return;
+    if (savingRef.current) return;
     const data = new FormData(event.currentTarget);
     const name = String(data.get("name") ?? "").trim();
     if (!name) {
       setError("Please enter a project name.");
       return;
     }
+    savingRef.current = true;
     setSaving(true);
     setError("");
     try {
@@ -77,6 +84,8 @@ export function ProjectForm({
           ? error.message
           : "Could not connect. Please try again.",
       );
+    } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   }
@@ -87,9 +96,9 @@ export function ProjectForm({
       className={styles.dialog}
       aria-labelledby="project-form-heading"
       aria-describedby="project-form-description"
-      onClose={onClose}
+      onClose={close}
       onCancel={(event) => {
-        if (saving) event.preventDefault();
+        if (savingRef.current) event.preventDefault();
       }}
     >
       <div className={styles.content}>
@@ -102,7 +111,7 @@ export function ProjectForm({
             className={styles.close}
             disabled={saving}
             aria-label="Close project form"
-            onClick={onClose}
+            onClick={close}
           >
             ×
           </button>
@@ -169,7 +178,7 @@ export function ProjectForm({
               </p>
             )}
             <div className={styles.footer}>
-              <button type="button" className={styles.cancel} onClick={onClose}>
+              <button type="button" className={styles.cancel} onClick={close}>
                 Cancel
               </button>
               <button type="submit" className={styles.submit}>
