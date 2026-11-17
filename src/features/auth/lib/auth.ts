@@ -1,9 +1,26 @@
 import "server-only";
 
 import { betterAuth } from "better-auth";
+import { APIError } from "better-auth/api";
 import { getDb } from "@/server/db";
 import { requireEnv } from "@/lib/env";
 import { timezoneValidator } from "@/lib/timezone";
+import {
+  sanitizeUserCreate,
+  sanitizeUserUpdate,
+  UserValidationError,
+} from "./user-validation";
+
+function validateUserHook<T>(validate: () => T): T {
+  try {
+    return validate();
+  } catch (error) {
+    if (error instanceof UserValidationError) {
+      throw new APIError("BAD_REQUEST", { message: error.message });
+    }
+    throw error;
+  }
+}
 
 function createAuth() {
   return betterAuth({
@@ -14,6 +31,25 @@ function createAuth() {
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: false,
+    },
+    databaseHooks: {
+      user: {
+        create: {
+          async before(user) {
+            return validateUserHook(() => ({
+              data: sanitizeUserCreate(user),
+            }));
+          },
+        },
+        update: {
+          async before(user) {
+            return validateUserHook(() => {
+              const data = sanitizeUserUpdate(user);
+              return data ? { data } : undefined;
+            });
+          },
+        },
+      },
     },
     user: {
       additionalFields: {
