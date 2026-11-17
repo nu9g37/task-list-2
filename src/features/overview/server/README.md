@@ -40,7 +40,7 @@ No additional schema/migration is needed.
 With PostgreSQL configured and the Next dev server running, verify using:
 
 ```powershell
-node scripts/test-overview-api.mjs
+node scripts/tests/test-overview-api.mjs
 ```
 
 The script creates isolated fixture users and removes only their data afterwards.

@@ -97,7 +97,7 @@ empty. Today, Done and search results cannot reorder. Failed saves restore the l
 With the configured PostgreSQL database and Next dev server running:
 
 ```powershell
-node scripts/test-task-api.mjs
+node scripts/tests/test-task-api.mjs
 ```
 
 The integration script creates two isolated fixture users, exercises the real HTTP

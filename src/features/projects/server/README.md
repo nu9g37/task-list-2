@@ -57,6 +57,6 @@ ID และ userId กำหนดฝั่ง server ไม่รับจา�
 
 ## Integration test
 
-สคริปต์ `scripts/test-project-api.mjs` ใช้ API และ PostgreSQL จริง สร้างผู้ใช้ทดสอบเฉพาะกิจสองคน แล้วลบเฉพาะข้อมูลของผู้ใช้ที่สร้างในการรันนั้นเมื่อจบ การทดสอบต้องใช้ฐานข้อมูลสำหรับพัฒนา
+สคริปต์ `scripts/tests/test-project-api.mjs` ใช้ API และ PostgreSQL จริง สร้างผู้ใช้ทดสอบเฉพาะกิจสองคน แล้วลบเฉพาะข้อมูลของผู้ใช้ที่สร้างในการรันนั้นเมื่อจบ การทดสอบต้องใช้ฐานข้อมูลสำหรับพัฒนา
 
-เปิด dev server ด้วย `npm run dev` จากนั้นรัน `node scripts/test-project-api.mjs` สคริปต์ใช้ `BETTER_AUTH_URL` จาก `.env.local` หากใช้ URL อื่นให้ตั้ง `API_TEST_URL` ให้ตรงกับ URL ของ server และค่า Origin ที่ server ยอมรับ
+เปิด dev server ด้วย `npm run dev` จากนั้นรัน `node scripts/tests/test-project-api.mjs` สคริปต์ใช้ `BETTER_AUTH_URL` จาก `.env.local` หากใช้ URL อื่นให้ตั้ง `API_TEST_URL` ให้ตรงกับ URL ของ server และค่า Origin ที่ server ยอมรับ

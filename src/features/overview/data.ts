@@ -1,4 +1,5 @@
 import type { TaskPriority, TaskStatus } from "@/features/tasks/model";
+import { localDate, shiftDate } from "@/lib/timezone";
 
 export interface OverviewUser {
   id: string;
@@ -64,24 +65,6 @@ export class OverviewRequestError extends Error {
         : "Unable to load your workspace",
     );
   }
-}
-
-function localDate(value: string, timezone: string) {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date(value));
-  const part = (type: string) =>
-    parts.find((item) => item.type === type)!.value;
-  return `${part("year")}-${part("month")}-${part("day")}`;
-}
-
-function shiftDate(date: string, days: number) {
-  const value = new Date(`${date}T12:00:00Z`);
-  value.setUTCDate(value.getUTCDate() + days);
-  return value.toISOString().slice(0, 10);
 }
 
 export function buildOverview(

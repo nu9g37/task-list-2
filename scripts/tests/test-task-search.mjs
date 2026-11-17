@@ -1,28 +1,11 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
-import ts from "typescript";
+import { importTs } from "./load-ts.mjs";
 
-async function moduleUrl(path, dependency) {
-  let source = await readFile(path, "utf8");
-  if (dependency)
-    source = source.replace(
-      '"@/features/overview/data"',
-      JSON.stringify(dependency),
-    );
-  const { outputText } = ts.transpileModule(source, {
-    compilerOptions: {
-      module: ts.ModuleKind.ESNext,
-      target: ts.ScriptTarget.ES2022,
-    },
-  });
-  return (
-    "data:text/javascript;base64," + Buffer.from(outputText).toString("base64")
-  );
-}
-const dataUrl = await moduleUrl("src/features/overview/data.ts");
-const { buildOverview, buildProjectOverview } = await import(dataUrl);
-const { matchesTaskSearch, searchOverview } = await import(
-  await moduleUrl("src/features/tasks/search.ts", dataUrl)
+const { buildOverview, buildProjectOverview } = await importTs(
+  "src/features/overview/data.ts",
+);
+const { matchesTaskSearch, searchOverview } = await importTs(
+  "src/features/tasks/search.ts",
 );
 const row = { title: "Review release notes", description: "Prepare launch" };
 for (const query of [

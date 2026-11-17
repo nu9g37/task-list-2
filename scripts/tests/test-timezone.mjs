@@ -1,23 +1,13 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
-import ts from "typescript";
+import { importTs } from "./load-ts.mjs";
 
-const source = await readFile("src/lib/timezone.ts", "utf8");
-const { outputText } = ts.transpileModule(source, {
-  compilerOptions: {
-    module: ts.ModuleKind.ESNext,
-    target: ts.ScriptTarget.ES2022,
-  },
-});
 const {
   getDeviceTimezone,
   isValidTimezone,
   timezoneLabel,
   timezoneOptions,
   timezoneValidator,
-} = await import(
-  "data:text/javascript;base64," + Buffer.from(outputText).toString("base64")
-);
+} = await importTs("src/lib/timezone.ts");
 const winter = new Date("2026-01-15T12:00:00Z");
 const summer = new Date("2026-07-15T12:00:00Z");
 

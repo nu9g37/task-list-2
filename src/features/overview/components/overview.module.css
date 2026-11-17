@@ -134,8 +134,7 @@
   color: var(--green);
 }
 .navItem,
-.projectNavItem,
-.projectCardHeader h3 a {
+.projectNavItem {
   color: inherit;
   text-decoration: none;
 }
@@ -151,13 +150,8 @@
   color: var(--green);
   border-radius: 8px;
 }
-.projectCardHeader h3 a:hover {
-  color: var(--green);
-  text-decoration: underline;
-}
 .navItem:focus-visible,
-.projectNavItem:focus-visible,
-.projectCardHeader h3 a:focus-visible {
+.projectNavItem:focus-visible {
   outline: 2px solid var(--green);
   outline-offset: 2px;
 }
@@ -310,8 +304,7 @@
     visibility: hidden;
   }
 }
-.addProject,
-.help {
+.addProject {
   display: flex;
   gap: 8px;
   align-items: center;
@@ -319,8 +312,6 @@
   background: transparent;
   font-size: 12px;
   color: var(--muted);
-}
-.addProject {
   height: 36px;
   padding: 0 10px 0 28px;
 }
@@ -328,11 +319,6 @@
   margin-top: auto;
   padding-top: 24px;
   flex-shrink: 0;
-}
-.help {
-  padding: 0;
-  height: 24px;
-  margin-bottom: 26px;
 }
 .profile {
   width: 100%;
@@ -533,8 +519,7 @@
   width: 118px;
   font-size: 12px;
 }
-.summaryGrid,
-.projectGrid {
+.summaryGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
@@ -625,25 +610,6 @@
   color: var(--muted);
   margin-bottom: 20px;
 }
-.loadingLine {
-  height: 36px;
-  width: min(360px, 100%);
-  background: var(--border);
-  border-radius: 8px;
-  margin-bottom: 32px;
-}
-.loadingCards {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
-}
-.loadingCards > div {
-  height: 112px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  border-radius: 12px;
-}
 .projectNavItem > span:nth-child(2) {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -677,8 +643,7 @@
   align-items: center;
   gap: 12px;
 }
-.sectionTitle h2,
-.projectsHeading h2 {
+.sectionTitle h2 {
   margin: 0;
   font-size: 18px;
   line-height: 26px;
@@ -698,16 +663,6 @@
   display: flex;
   align-items: center;
   gap: 36px;
-}
-.filterButton {
-  border: 0;
-  background: transparent;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--muted);
-  padding: 0;
 }
 .taskTabs {
   display: flex;
@@ -964,61 +919,6 @@
   gap: 6px;
   color: var(--orange);
 }
-.projectsSection {
-  margin-top: 22px;
-}
-.projectsHeading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-.viewProjects {
-  background: transparent;
-  border: 0;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 12px;
-  color: var(--green);
-}
-.projectCard {
-  height: 170px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  border-radius: 12px;
-  padding: 20px;
-}
-.projectCardHeader {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.projectIcon {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  background: var(--sidebar);
-  border-radius: 8px;
-  flex-shrink: 0;
-}
-.projectCardHeader h3 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 500;
-  flex: 1;
-}
-.projectCard > p {
-  color: var(--muted);
-  font-size: 12px;
-  margin: 12px 0;
-  line-height: 18px;
-}
-.projectCard > p:last-child {
-  margin-top: 10px;
-}
 
 @media (max-width: 1200px) {
   .sidebar {
@@ -1087,17 +987,8 @@
     flex-direction: column;
     gap: 4px;
   }
-  .projectGrid {
-    grid-template-columns: 1fr;
-  }
-  .projectCard {
-    height: auto;
-  }
 }
 @media (max-width: 700px) {
-  .loadingCards {
-    grid-template-columns: 1fr;
-  }
   .desktopSidebar {
     display: none;
   }
@@ -1203,9 +1094,6 @@
   }
   .upcomingCard {
     min-height: 150px;
-  }
-  .projectsHeading h2 {
-    font-size: 16px;
   }
 }
 

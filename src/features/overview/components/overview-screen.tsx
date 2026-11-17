@@ -143,11 +143,11 @@ export function OverviewScreen({
               </button>
             </div>
           </section>
-          <SummaryCards data={visibleData!} />
+          <SummaryCards data={visibleData} />
           <div className={styles.contentGrid}>
             <TaskList
               key={projectId ?? "overview"}
-              tasks={visibleData!.tasks}
+              tasks={visibleData.tasks}
               searching={!!search.trim()}
               onAddTask={createTask}
               onStatusChange={changeTaskStatus}
@@ -155,7 +155,7 @@ export function OverviewScreen({
               onDeleteTask={setDeletingTask}
               onReorder={reorderTasks}
             />
-            <FocusPanel data={visibleData!} />
+            <FocusPanel data={visibleData} />
           </div>
           {taskFormOpen && (
             <TaskForm

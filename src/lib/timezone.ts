@@ -19,6 +19,26 @@ export function getDeviceTimezone(): string {
   }
 }
 
+/** Format an instant as YYYY-MM-DD in the given IANA timezone. */
+export function localDate(value: string, timezone: string): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date(value));
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((item) => item.type === type)!.value;
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
+
+/** Shift a YYYY-MM-DD calendar date by the given number of days. */
+export function shiftDate(date: string, days: number): string {
+  const value = new Date(`${date}T12:00:00Z`);
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString().slice(0, 10);
+}
+
 /** Format an instant for date/time inputs in the account's timezone. */
 export function taskDateTime(
   value: string,

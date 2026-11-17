@@ -1,22 +1,7 @@
 import type { OverviewData, ApiTask } from "@/features/overview/data";
+import { localDate, shiftDate } from "@/lib/timezone";
 
-export function shiftDay(day: string, amount: number) {
-  const date = new Date(`${day}T12:00:00Z`);
-  date.setUTCDate(date.getUTCDate() + amount);
-  return date.toISOString().slice(0, 10);
-}
-
-export function localDay(value: string, timezone: string) {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date(value));
-  const part = (type: string) =>
-    parts.find((item) => item.type === type)!.value;
-  return `${part("year")}-${part("month")}-${part("day")}`;
-}
+export { localDate as localDay, shiftDate as shiftDay };
 
 export function formatDay(day: string, options: Intl.DateTimeFormatOptions) {
   return new Intl.DateTimeFormat("en-US", {
@@ -33,16 +18,16 @@ export function shiftMonth(month: string, amount: number) {
 
 export function weekDays(day: string) {
   const weekday = new Date(`${day}T12:00:00Z`).getUTCDay();
-  const monday = shiftDay(day, -((weekday + 6) % 7));
-  return Array.from({ length: 7 }, (_, index) => shiftDay(monday, index));
+  const monday = shiftDate(day, -((weekday + 6) % 7));
+  return Array.from({ length: 7 }, (_, index) => shiftDate(monday, index));
 }
 
 export function monthDays(month: string) {
   const start = weekDays(`${month}-01`)[0];
-  const last = shiftDay(`${shiftMonth(month, 1)}-01`, -1);
+  const last = shiftDate(`${shiftMonth(month, 1)}-01`, -1);
   const end = weekDays(last)[6];
   const days: string[] = [];
-  for (let day = start; day <= end; day = shiftDay(day, 1)) days.push(day);
+  for (let day = start; day <= end; day = shiftDate(day, 1)) days.push(day);
   return days;
 }
 
@@ -64,7 +49,7 @@ export function calendarTasks(data: OverviewData): CalendarTask[] {
     .sort((a, b) => new Date(a.dueAt!).getTime() - new Date(b.dueAt!).getTime())
     .map((task) => ({
       source: task,
-      day: localDay(task.dueAt!, data.timezone),
+      day: localDate(task.dueAt!, data.timezone),
       time: new Intl.DateTimeFormat("en-US", {
         timeZone: data.timezone,
         hour: "numeric",

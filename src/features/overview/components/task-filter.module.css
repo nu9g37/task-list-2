@@ -112,57 +112,6 @@
   border-color: var(--green);
   color: var(--green);
 }
-.options {
-  display: grid;
-  gap: 2px;
-  max-height: 148px;
-  overflow-y: auto;
-}
-.option {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 8px;
-  border-radius: 8px;
-  font-size: 13px;
-  cursor: pointer;
-}
-.option:hover {
-  background: var(--green-soft);
-}
-.option input {
-  position: absolute;
-  opacity: 0;
-  inset: 0;
-  margin: 0;
-  cursor: pointer;
-}
-.option input:focus-visible + .box {
-  outline: 2px solid var(--green);
-  outline-offset: 2px;
-}
-.box {
-  flex: none;
-  width: 16px;
-  height: 16px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--surface);
-  color: white;
-}
-.option input:checked + .box {
-  background: var(--green);
-  border-color: var(--green);
-}
-.optionLabel {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 .footer {
   display: flex;
   justify-content: space-between;

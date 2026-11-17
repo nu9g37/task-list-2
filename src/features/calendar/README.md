@@ -8,4 +8,4 @@ Selecting a date shows its timed tasks in `DayPanel`. Checkboxes update task sta
 
 The right panel has no Add task button. The design's bottom caption and saved-status indicator are omitted as requested.
 
-Date boundary checks: `node scripts/test-calendar-data.mjs`.
+Date boundary checks: `node scripts/tests/test-calendar-data.mjs`.

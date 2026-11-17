@@ -1,27 +1,17 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { readFile } from "node:fs/promises";
 import nextEnv from "@next/env";
 import pg from "pg";
-import ts from "typescript";
+import { importTs } from "./load-ts.mjs";
 
 nextEnv.loadEnvConfig(process.cwd(), true);
-const source = await readFile("src/features/overview/data.ts", "utf8");
-const { outputText } = ts.transpileModule(source, {
-  compilerOptions: {
-    module: ts.ModuleKind.ESNext,
-    target: ts.ScriptTarget.ES2022,
-  },
-});
 const {
   buildOverview,
   buildProjectOverview,
   loadOverview,
   updateOverviewTasks,
   OverviewRequestError,
-} = await import(
-  "data:text/javascript;base64," + Buffer.from(outputText).toString("base64")
-);
+} = await importTs("src/features/overview/data.ts");
 const base =
   process.env.API_TEST_URL ??
   process.env.BETTER_AUTH_URL ??

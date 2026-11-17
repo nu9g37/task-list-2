@@ -1,6 +1,4 @@
 const paths = {
-  home: <path d="M3.5 10.5 12 3.5l8.5 7M5.5 9v11h13V9M9.5 20v-6.5h5V20" />,
-  profile: <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM5 21a7 7 0 0 1 14 0" />,
   menu: <path d="M4 6h16M4 12h16M4 18h16" />,
   close: <path d="m6 6 12 12M6 18 18 6" />,
   grid: (
@@ -30,7 +28,6 @@ const paths = {
       <path d="m16 16 5 5" />
     </>
   ),
-  bell: <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />,
   clock: (
     <>
       <circle cx="12" cy="12" r="9" />
@@ -44,12 +41,6 @@ const paths = {
       <circle cx="5" cy="12" r=".6" />
       <circle cx="12" cy="12" r=".6" />
       <circle cx="19" cy="12" r=".6" />
-    </>
-  ),
-  help: (
-    <>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M9.5 8.5a2.5 2.5 0 1 1 4 2c-1 .6-1.5 1-1.5 2.5M12 17h.01" />
     </>
   ),
 } as const;

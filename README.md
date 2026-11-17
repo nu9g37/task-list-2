@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Tasklist 2
+
+Personal task and project workspace built with Next.js App Router, React, Better Auth, and PostgreSQL (`pg`).
 
 ## Getting Started
 
-First, run the development server:
+1. Copy `.env.example` to `.env.local` and configure `DATABASE_URL`, `BETTER_AUTH_URL`, and `BETTER_AUTH_SECRET`.
+2. Apply the SQL migrations in `db/migrations/` in order (`0001_initial.sql`, `0002_remove_in_progress.sql`, `0003_split_task_positions.sql`); see [`db/README.md`](db/README.md).
+3. Verify database connectivity and schema columns, then start the development server:
 
 ```bash
+npm run db:check
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) (unauthenticated requests redirect to `/sign-in`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `npm run dev` — start the Next.js development server (`src/app/`)
+- `npm run build` — build for production
+- `npm run start` — run the production server
+- `npm run lint` — run ESLint
+- `npm run format:check` / `npm run format` — check or format files with Prettier
+- `npm run db:check` — verify PostgreSQL connection and expected table columns
 
-## Learn More
+## Verification
 
-To learn more about Next.js, take a look at the following resources:
+Offline unit tests (no database or running server required):
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+node scripts/tests/test-timezone.mjs
+node scripts/tests/test-task-search.mjs
+node scripts/tests/test-calendar-data.mjs
+node scripts/tests/test-user-validation.mjs
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+HTTP/database integration tests (require PostgreSQL and a running Next.js server):
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+node scripts/tests/test-task-api.mjs
+node scripts/tests/test-project-api.mjs
+node scripts/tests/test-overview-api.mjs
+node scripts/tests/test-overview-frontend.mjs
+node scripts/tests/test-profile-timezone-api.mjs
+```

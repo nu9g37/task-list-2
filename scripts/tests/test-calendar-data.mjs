@@ -1,17 +1,8 @@
 import assert from "node:assert/strict";
-import ts from "typescript";
-import { readFile } from "node:fs/promises";
-const source = await readFile("src/features/calendar/data.ts", "utf8");
-const out = ts.transpileModule(source, {
-  compilerOptions: {
-    module: ts.ModuleKind.ESNext,
-    target: ts.ScriptTarget.ES2022,
-  },
-}).outputText;
+import { importTs } from "./load-ts.mjs";
+
 const { monthDays, weekDays, shiftMonth, shiftDay, localDay, calendarTasks } =
-  await import(
-    "data:text/javascript;base64," + Buffer.from(out).toString("base64")
-  );
+  await importTs("src/features/calendar/data.ts");
 assert.equal(monthDays("2026-09").length, 35);
 assert.equal(monthDays("2026-09")[0], "2026-08-31");
 assert.equal(monthDays("2026-09").at(-1), "2026-10-04");

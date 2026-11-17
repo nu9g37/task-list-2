@@ -1,17 +1,6 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
-import ts from "typescript";
+import { importTs } from "./load-ts.mjs";
 
-const source = await readFile(
-  "src/features/auth/lib/user-validation.ts",
-  "utf8",
-);
-const { outputText } = ts.transpileModule(source, {
-  compilerOptions: {
-    module: ts.ModuleKind.ESNext,
-    target: ts.ScriptTarget.ES2022,
-  },
-});
 const {
   MAX_USER_IMAGE_DATA_URL_LENGTH,
   MAX_USER_IMAGE_URL_LENGTH,
@@ -21,9 +10,7 @@ const {
   parseUserName,
   sanitizeUserCreate,
   sanitizeUserUpdate,
-} = await import(
-  "data:text/javascript;base64," + Buffer.from(outputText).toString("base64")
-);
+} = await importTs("src/features/auth/lib/user-validation.ts");
 
 assert.equal(parseUserName("  Alex Kim  "), "Alex Kim");
 assert.equal(parseUserName("สมชาย ใจดี"), "สมชาย ใจดี");

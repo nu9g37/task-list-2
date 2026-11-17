@@ -4,7 +4,7 @@ Overview, Calendar and Project pages authenticate once on the server and load th
 
 Task create/edit/status/delete and reorder apply saved results locally, rebuilding counters, focus, upcoming items and sidebar totals. Project create/edit/reorder also update the active view without a full reload. Project deletion and profile changes still revalidate. Failed writes preserve the previous data; reorder conflicts trigger a refresh. In-flight loads are cancelled before applying mutations so a late response cannot overwrite a saved result.
 
-`overview-data.ts` converts API data into the UI view model:
+`src/features/overview/data.ts` converts API data into the UI view model:
 
 `/projects/[id]` reuses the Overview layout without the Your projects section.
 Overview and project routes share `app/(workspace)/layout.tsx`. The client workspace
@@ -39,7 +39,7 @@ that its Intl implementation does not support. New task opens the creation form.
 Task tabs filter locally. Row checkboxes save TODO/DONE through the Task API.
 The row options popover opens the shared create/edit form or a delete confirmation.
 Editing preserves the current task status and unchanged deadline precision.
-Navigation and advanced filters remain disabled.
+Sidebar navigation (`Overview`, `Calendar`, `Projects`) and task filtering/sorting (`TaskFilter`) are active.
 
 The home page checks the Better Auth session on the server before rendering and
 redirects unauthenticated requests to `/sign-in`. A 401 from the client API loader
@@ -55,7 +55,7 @@ above the independently scrolling content.
 Verification with the local Next dev server and PostgreSQL running:
 
 ```powershell
-node scripts/test-overview-frontend.mjs
+node scripts/tests/test-overview-frontend.mjs
 ```
 
 This tests the single-request loader and server-rendered tasks with isolated fixture
