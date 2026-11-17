@@ -30,6 +30,7 @@ export function CalendarGrid({
           scheduled.map((task) => (
             <button
               key={task.source.id}
+              type="button"
               onClick={() => onSelect(task.day)}
               className={styles.agendaRow}
             >
@@ -38,7 +39,7 @@ export function CalendarGrid({
                 <small>{task.time}</small>
               </span>
               <span
-                className={styles.event}
+                className={`${styles.event} ${task.source.status === "DONE" ? styles.done : ""}`}
                 style={{ "--event-color": task.color } as CSSProperties}
               >
                 {task.source.title}

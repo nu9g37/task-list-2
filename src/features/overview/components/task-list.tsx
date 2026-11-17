@@ -39,7 +39,9 @@ export function TaskList({
   const [message, setMessage] = useState("");
   const saving = useRef(false);
   const list = useRef<HTMLUListElement>(null);
-  const drag = useRef<{ id: string; index: number } | null>(null);
+  const drag = useRef<{ id: string; index: number; pointerId: number } | null>(
+    null,
+  );
   const [dragging, setDragging] = useState<{
     id: string;
     index: number;
@@ -114,7 +116,7 @@ export function TaskList({
   const orderedTasks = order
     ? order.flatMap((id) => tasks.filter((task) => task.id === id))
     : tasks;
-  const priorityRank = { HIGH: 0, MEDIUM: 1, LOW: 2 } as const;
+  const priorityRank = { LOW: 0, MEDIUM: 1, HIGH: 2 } as const;
   const visibleTasks = orderedTasks
     .filter((task) =>
       activeTab === "all"
@@ -238,8 +240,12 @@ export function TaskList({
                   onPointerDown={(event) => {
                     if (busy || event.button !== 0 || !event.isPrimary) return;
                     event.currentTarget.setPointerCapture(event.pointerId);
-                    drag.current = { id: task.id, index };
-                    setDragging(drag.current);
+                    drag.current = {
+                      id: task.id,
+                      index,
+                      pointerId: event.pointerId,
+                    };
+                    setDragging({ id: task.id, index });
                   }}
                   onPointerMove={(event) => {
                     if (!drag.current || !list.current) return;
@@ -254,7 +260,7 @@ export function TaskList({
                     );
                     const next = target < 0 ? rows.length - 1 : target;
                     drag.current = { ...drag.current, index: next };
-                    setDragging(drag.current);
+                    setDragging({ id: drag.current.id, index: next });
                     const bounds = list.current.getBoundingClientRect();
                     if (event.clientY < bounds.top + 32)
                       list.current.scrollTop -= 16;
@@ -265,7 +271,13 @@ export function TaskList({
                     const current = drag.current;
                     drag.current = null;
                     setDragging(null);
-                    event.currentTarget.releasePointerCapture(event.pointerId);
+                    if (
+                      event.currentTarget.hasPointerCapture(event.pointerId)
+                    ) {
+                      event.currentTarget.releasePointerCapture(
+                        event.pointerId,
+                      );
+                    }
                     if (current) void move(current.id, current.index);
                   }}
                   onLostPointerCapture={() => {
@@ -278,8 +290,17 @@ export function TaskList({
                   }}
                   onKeyDown={(event) => {
                     if (event.key === "Escape") {
+                      const current = drag.current;
                       drag.current = null;
                       setDragging(null);
+                      if (
+                        current &&
+                        event.currentTarget.hasPointerCapture(current.pointerId)
+                      ) {
+                        event.currentTarget.releasePointerCapture(
+                          current.pointerId,
+                        );
+                      }
                     }
                     if (
                       event.altKey &&

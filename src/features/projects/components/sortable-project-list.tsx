@@ -9,9 +9,11 @@ import styles from "@/features/overview/components/overview.module.css";
 export function SortableProjectList({
   projects,
   activeProjectId,
+  onCloseSidebar,
 }: {
   projects: OverviewProject[];
   activeProjectId?: string;
+  onCloseSidebar?: () => void;
 }) {
   const { reorderProjects, reordering } = useWorkspace();
   const [drag, setDrag] = useState<{
@@ -142,6 +144,7 @@ export function SortableProjectList({
                 <ProjectNavItem
                   project={project}
                   active={activeProjectId === project.id}
+                  onCloseSidebar={onCloseSidebar}
                 />
               </div>
             </Fragment>

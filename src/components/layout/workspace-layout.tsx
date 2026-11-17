@@ -11,6 +11,7 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { AppShell } from "./app-shell";
 import { ProjectForm } from "@/features/projects/components/project-form";
+import { DeleteProjectDialog } from "@/features/projects/components/delete-project-dialog";
 import { ProfileForm } from "@/features/profile/components/profile-form";
 import type {
   ApiProject,
@@ -26,7 +27,8 @@ const WorkspaceContext = createContext<{
   publish: (data: OverviewData) => void;
   search: string;
   setSearch: (value: string) => void;
-  projectChanged: (deletedId?: string) => void;
+  editProject: (project: OverviewProject) => void;
+  deleteProject: (project: OverviewProject) => void;
   saveProject: (project: ApiProject) => void;
   subscribeProjects: (listener: (change: ProjectChange) => void) => () => void;
   reorderProjects: (ids: string[]) => Promise<void>;
@@ -39,7 +41,15 @@ export function useWorkspace() {
   return workspace;
 }
 
-export function WorkspaceLayout({ children }: { children: ReactNode }) {
+export function WorkspaceLayout({
+  children,
+  initialUser,
+  initialProjects = [],
+}: {
+  children: ReactNode;
+  initialUser?: OverviewUser;
+  initialProjects?: OverviewProject[];
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const [searches, setSearches] = useState<Record<string, string>>({});
@@ -52,8 +62,12 @@ export function WorkspaceLayout({ children }: { children: ReactNode }) {
   const [sidebar, setSidebar] = useState<{
     user?: OverviewUser;
     projects: OverviewProject[];
-  }>({ projects: [] });
-  const [projectFormOpen, setProjectFormOpen] = useState(false);
+  }>({ user: initialUser, projects: initialProjects });
+  const [projectForm, setProjectForm] = useState<{
+    project?: OverviewProject;
+  } | null>(null);
+  const [deletingProject, setDeletingProject] =
+    useState<OverviewProject | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [revision, setRevision] = useState(0);
   const [reordering, setReordering] = useState(false);
@@ -91,7 +105,10 @@ export function WorkspaceLayout({ children }: { children: ReactNode }) {
           (project) => project.id !== deletedId,
         ),
       }));
-      if (activeProjectId === deletedId) router.replace("/");
+      if (activeProjectId === deletedId) {
+        router.replace("/");
+        return;
+      }
     }
     setRevision((value) => value + 1);
   }
@@ -99,14 +116,15 @@ export function WorkspaceLayout({ children }: { children: ReactNode }) {
   async function reorderProjects(ids: string[]) {
     if (savingOrder.current) return;
     const previous = sidebar.projects;
+    const byId = new Map(previous.map((project) => [project.id, project]));
     savingOrder.current = true;
     setReordering(true);
     setSidebar((value) => ({
       ...value,
-      projects: ids.map((id, position) => ({
-        ...previous.find((project) => project.id === id)!,
-        position,
-      })),
+      projects: ids.flatMap((id, position) => {
+        const project = byId.get(id);
+        return project ? [{ ...project, position }] : [];
+      }),
     }));
     try {
       const response = await fetch("/api/projects/reorder", {
@@ -135,7 +153,8 @@ export function WorkspaceLayout({ children }: { children: ReactNode }) {
         publish,
         search,
         setSearch,
-        projectChanged,
+        editProject: (project) => setProjectForm({ project }),
+        deleteProject: (project) => setDeletingProject(project),
         saveProject,
         subscribeProjects,
         reorderProjects,
@@ -147,14 +166,22 @@ export function WorkspaceLayout({ children }: { children: ReactNode }) {
         activeProjectId={activeProjectId}
         user={sidebar.user}
         projects={sidebar.projects}
-        onAddProject={() => setProjectFormOpen(true)}
+        onAddProject={() => setProjectForm({})}
         onOpenProfile={() => setProfileOpen(true)}
       >
         {children}
-        {projectFormOpen && (
+        {projectForm && (
           <ProjectForm
-            onClose={() => setProjectFormOpen(false)}
+            project={projectForm.project}
+            onClose={() => setProjectForm(null)}
             onCreated={saveProject}
+          />
+        )}
+        {deletingProject && (
+          <DeleteProjectDialog
+            project={deletingProject}
+            onClose={() => setDeletingProject(null)}
+            onDeleted={() => projectChanged(deletingProject.id)}
           />
         )}
         {profileOpen && sidebar.user && (

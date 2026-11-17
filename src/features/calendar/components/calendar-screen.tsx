@@ -4,10 +4,7 @@ import { useRef, useState } from "react";
 import { useOverview } from "@/features/overview/hooks/use-overview";
 import { useRouter } from "next/navigation";
 import { useWorkspace } from "@/components/layout/workspace-layout";
-import {
-  OverviewRequestError,
-  type OverviewData,
-} from "@/features/overview/data";
+import type { OverviewData } from "@/features/overview/data";
 import { TaskForm } from "@/features/tasks/components/task-form";
 import { searchOverview } from "@/features/tasks/search";
 import { Icon } from "@/components/ui/icon";
@@ -58,10 +55,8 @@ export function CalendarScreen({ initialData }: { initialData: OverviewData }) {
       if (!response.ok) throw new Error();
       const result = await response.json();
       saveTask(result.task);
-    } catch (failure) {
-      if (failure instanceof OverviewRequestError && failure.status === 401)
-        router.replace("/sign-in");
-      else setMutationError("Could not update the task. Please try again.");
+    } catch {
+      setMutationError("Could not update the task. Please try again.");
     } finally {
       mutationInFlight.current = false;
       setUpdating(false);
@@ -72,22 +67,20 @@ export function CalendarScreen({ initialData }: { initialData: OverviewData }) {
     return (
       <section className={styles.empty} role="alert">
         <p>Unable to load your calendar. Please try again.</p>
-        <button className={styles.todayButton} onClick={retry}>
+        <button type="button" className={styles.todayButton} onClick={retry}>
           Try again
         </button>
       </section>
-    );
-  if (!data)
-    return (
-      <p className={styles.empty} role="status">
-        Loading your calendar…
-      </p>
     );
   const displayedMonth = month ?? data.date.slice(0, 7);
   const selectedDay = selection ?? data.date;
   const visibleData = searchOverview(data, search);
   const tasks = calendarTasks(visibleData);
   const today = tasks.filter((task) => task.day === data.date);
+  function selectDay(day: string) {
+    setSelection(day);
+    if (view === "Week") setMonth(day.slice(0, 7));
+  }
   function navigate(amount: number) {
     if (view === "Week") {
       const day = shiftDay(selectedDay, amount * 7);
@@ -106,7 +99,11 @@ export function CalendarScreen({ initialData }: { initialData: OverviewData }) {
           <h1>Calendar</h1>
           <p>A little planning goes a long way.</p>
         </div>
-        <button className={styles.newTask} onClick={() => setCreating(true)}>
+        <button
+          type="button"
+          className={styles.newTask}
+          onClick={() => setCreating(true)}
+        >
           <Icon name="plus" size={14} />
           New task
         </button>
@@ -132,16 +129,25 @@ export function CalendarScreen({ initialData }: { initialData: OverviewData }) {
               })}
             </h2>
             <div className={styles.monthArrows}>
-              <button aria-label="Previous period" onClick={() => navigate(-1)}>
+              <button
+                type="button"
+                aria-label="Previous period"
+                onClick={() => navigate(-1)}
+              >
                 <span className={styles.previous}>
                   <Icon name="right" />
                 </span>
               </button>
-              <button aria-label="Next period" onClick={() => navigate(1)}>
+              <button
+                type="button"
+                aria-label="Next period"
+                onClick={() => navigate(1)}
+              >
                 <Icon name="right" />
               </button>
             </div>
             <button
+              type="button"
               className={styles.todayButton}
               onClick={() => {
                 setMonth(data.date.slice(0, 7));
@@ -154,9 +160,13 @@ export function CalendarScreen({ initialData }: { initialData: OverviewData }) {
               {(["Month", "Week", "Agenda"] as const).map((name) => (
                 <button
                   key={name}
+                  type="button"
                   aria-pressed={view === name}
                   className={view === name ? styles.activeView : ""}
-                  onClick={() => setView(name)}
+                  onClick={() => {
+                    setView(name);
+                    if (name === "Week") setMonth(selectedDay.slice(0, 7));
+                  }}
                 >
                   {name}
                 </button>
@@ -169,7 +179,7 @@ export function CalendarScreen({ initialData }: { initialData: OverviewData }) {
             today={data.date}
             tasks={tasks}
             view={view}
-            onSelect={setSelection}
+            onSelect={selectDay}
           />
         </section>
         <DayPanel

@@ -59,26 +59,28 @@ export function AppShell({
           if (event.target === event.currentTarget) closeSidebar();
         }}
       >
-        <AppSidebar
-          {...sidebarProps}
-          onClose={closeSidebar}
-          onAddProject={
-            onAddProject
-              ? () => {
-                  closeSidebar();
-                  onAddProject();
-                }
-              : undefined
-          }
-          onOpenProfile={
-            onOpenProfile
-              ? () => {
-                  closeSidebar();
-                  onOpenProfile();
-                }
-              : undefined
-          }
-        />
+        {sidebarOpen && (
+          <AppSidebar
+            {...sidebarProps}
+            onClose={closeSidebar}
+            onAddProject={
+              onAddProject
+                ? () => {
+                    closeSidebar();
+                    onAddProject();
+                  }
+                : undefined
+            }
+            onOpenProfile={
+              onOpenProfile
+                ? () => {
+                    closeSidebar();
+                    onOpenProfile();
+                  }
+                : undefined
+            }
+          />
+        )}
       </dialog>
       <div className={styles.workspace}>
         <AppHeader
@@ -86,8 +88,8 @@ export function AppShell({
           sidebarId={drawerId}
           sidebarOpen={sidebarOpen}
           onOpenSidebar={() => {
-            drawerRef.current?.showModal();
             setSidebarOpen(true);
+            drawerRef.current?.showModal();
           }}
         />
         <main className={styles.main}>{children}</main>

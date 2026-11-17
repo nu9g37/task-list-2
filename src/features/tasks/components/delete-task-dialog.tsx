@@ -13,14 +13,20 @@ export function DeleteTaskDialog({
   onDeleted: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const inFlight = useRef(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   useEffect(() => {
     if (!ref.current?.open) ref.current?.showModal();
   }, []);
 
+  function close() {
+    if (!inFlight.current) onClose();
+  }
+
   async function remove() {
-    if (pending) return;
+    if (inFlight.current) return;
+    inFlight.current = true;
     setPending(true);
     setError("");
     try {
@@ -42,6 +48,8 @@ export function DeleteTaskDialog({
           ? error.message
           : "Could not connect. Please try again.",
       );
+    } finally {
+      inFlight.current = false;
       setPending(false);
     }
   }
@@ -52,9 +60,9 @@ export function DeleteTaskDialog({
       className={styles.dialog}
       aria-labelledby="delete-task-heading"
       aria-describedby="delete-task-description"
-      onClose={onClose}
+      onClose={close}
       onCancel={(event) => {
-        if (pending) event.preventDefault();
+        if (inFlight.current) event.preventDefault();
       }}
     >
       <div className={styles.content}>
@@ -65,7 +73,7 @@ export function DeleteTaskDialog({
             className={styles.close}
             aria-label="Close confirmation"
             disabled={pending}
-            onClick={onClose}
+            onClick={close}
           >
             ×
           </button>
@@ -83,7 +91,7 @@ export function DeleteTaskDialog({
             type="button"
             className={styles.cancel}
             disabled={pending}
-            onClick={onClose}
+            onClick={close}
             autoFocus
           >
             Cancel

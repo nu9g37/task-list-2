@@ -141,7 +141,6 @@
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   grid-template-rows: repeat(var(--week-count), minmax(118px, 1fr));
-  min-height: 590px;
 }
 .dayCell {
   padding: 10px 8px 6px;
@@ -421,7 +420,6 @@
     grid-row: span 2;
   }
   .dateGrid {
-    min-height: 500px;
     grid-template-rows: repeat(var(--week-count), minmax(100px, 1fr));
   }
 }
@@ -458,7 +456,6 @@
   }
   .dateGrid {
     grid-template-rows: repeat(var(--week-count), minmax(90px, 1fr));
-    min-height: 450px;
   }
   .dayCell {
     padding: 6px 3px;

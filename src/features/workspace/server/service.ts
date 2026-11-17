@@ -11,12 +11,24 @@ import { getOverview } from "@/features/overview/server/service";
 import { ApiError } from "@/lib/api";
 import { measure } from "@/lib/timing";
 
-export async function getWorkspace(user: OverviewUser, projectId?: string) {
+export async function fetchWorkspaceRecords(userId: string) {
   const [overview, projects, rows] = await Promise.all([
-    measure("summary", () => getOverview(user.id)),
-    measure("projects", () => listProjects(user.id, "active")),
-    measure("tasks", () => listTasks(user.id, { archived: "active" })),
+    measure("summary", () => getOverview(userId)),
+    measure("projects", () => listProjects(userId, "active")),
+    measure("tasks", () => listTasks(userId, { archived: "active" })),
   ]);
+  return { overview, projects, rows };
+}
+
+export type WorkspaceRecords = Awaited<
+  ReturnType<typeof fetchWorkspaceRecords>
+>;
+
+export function assembleWorkspace(
+  user: OverviewUser,
+  { overview, projects, rows }: WorkspaceRecords,
+  projectId?: string,
+) {
   if (projectId && !projects.some((p) => p.id === projectId))
     throw new ApiError(404, "Project not found");
   const tasks: ApiTask[] = rows.map((t) => ({
@@ -59,4 +71,9 @@ export async function getWorkspace(user: OverviewUser, projectId?: string) {
         ),
       )
     : buildOverview(safeUser, snapshot, safeProjects, tasks);
+}
+
+export async function getWorkspace(user: OverviewUser, projectId?: string) {
+  const records = await fetchWorkspaceRecords(user.id);
+  return assembleWorkspace(user, records, projectId);
 }

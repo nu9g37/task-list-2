@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 import { Icon } from "@/components/ui/icon";
 import type { OverviewTask } from "@/features/overview/data";
 import styles from "./overview.module.css";
@@ -26,7 +26,6 @@ export function TaskRow({
   const menuRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuOffset = useRef({ top: 0, left: 0 });
-  const [position, setPosition] = useState({ top: 0, left: 0 });
   useEffect(() => {
     function followTask() {
       const menu = menuRef.current;
@@ -77,7 +76,7 @@ export function TaskRow({
           const nextPosition = {
             top:
               rect.bottom + 5 + 90 > window.innerHeight
-                ? rect.top - 95
+                ? Math.max(8, rect.top - 95)
                 : rect.bottom + 5,
             left: Math.max(8, rect.right - 136),
           };
@@ -85,7 +84,6 @@ export function TaskRow({
             top: nextPosition.top - rect.top,
             left: nextPosition.left - rect.left,
           };
-          setPosition(nextPosition);
           if (menuRef.current) {
             menuRef.current.style.top = `${nextPosition.top}px`;
             menuRef.current.style.left = `${nextPosition.left}px`;
@@ -94,13 +92,7 @@ export function TaskRow({
       >
         <Icon name="more" size={16} />
       </button>
-      <div
-        ref={menuRef}
-        id={menuId}
-        popover="auto"
-        className={styles.taskMenu}
-        style={position}
-      >
+      <div ref={menuRef} id={menuId} popover="auto" className={styles.taskMenu}>
         <button
           type="button"
           disabled={pending}

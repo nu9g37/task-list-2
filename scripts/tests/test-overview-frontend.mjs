@@ -150,6 +150,27 @@ const removed = updateOverviewTasks(
 );
 assert.equal(removed.summary.totalTasks, 5);
 assert.equal(removed.projects[0].tasks, 4);
+// Numeric timestamp comparison must reject 500ms-later fractional ISO strings.
+const formatBoundary = buildOverview(
+  user,
+  { ...snapshot, asOf: "2026-10-05T01:00:00Z" },
+  [{ id: "p", name: "Project", color: "#245C45" }],
+  [
+    task("later-ms", {
+      status: "DONE",
+      completedAt: "2026-10-05T01:00:00.500Z",
+    }),
+  ],
+);
+assert.equal(formatBoundary.completedThisWeek, 0);
+// DB clock slightly ahead of client clock must still count new completions immediately.
+const skewedCompletion = updateOverviewTasks(view, [
+  task("skewed-done", {
+    status: "DONE",
+    completedAt: new Date(Date.now() + 10_000).toISOString(),
+  }),
+]);
+assert.equal(skewedCompletion.completedThisWeek, 1);
 let loaderCalls = 0;
 assert.deepEqual(
   await loadOverview(

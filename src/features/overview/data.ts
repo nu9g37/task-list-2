@@ -153,6 +153,7 @@ export function buildOverview(
     completed: task.status === "DONE",
     dueToday: !!task.dueAt && localDate(task.dueAt, timezone) === date,
   }));
+  const asOfMs = Date.parse(overview.asOf);
   const weekday = new Date(`${date}T12:00:00Z`).getUTCDay();
   const weekStart = shiftDate(date, -((weekday + 6) % 7));
   const previousWeek = shiftDate(weekStart, -7);
@@ -161,7 +162,7 @@ export function buildOverview(
       (task) =>
         task.status === "DONE" &&
         task.completedAt &&
-        task.completedAt <= overview.asOf &&
+        Date.parse(task.completedAt) <= asOfMs &&
         localDate(task.completedAt, timezone) >= from &&
         localDate(task.completedAt, timezone) < to,
     ).length;
@@ -256,13 +257,25 @@ export type OverviewData = ReturnType<typeof buildOverview>;
 export function updateOverviewTasks(
   data: OverviewData,
   tasks: ApiTask[],
-  asOf = new Date().toISOString(),
+  asOf?: string,
 ): OverviewData {
-  const date = localDate(asOf, data.timezone);
+  // Clamp omitted client clock to DB timestamps so clock skew never drops new completions.
+  const effectiveAsOf =
+    asOf ??
+    new Date(
+      Math.max(
+        Date.now(),
+        Date.parse(data.asOf) || 0,
+        ...tasks.map((task) =>
+          task.completedAt ? Date.parse(task.completedAt) || 0 : 0,
+        ),
+      ),
+    ).toISOString();
+  const date = localDate(effectiveAsOf, data.timezone);
   const snapshot: OverviewResponse = {
     timezone: data.timezone,
     date,
-    asOf,
+    asOf: effectiveAsOf,
     summary: {
       totalTasks: tasks.length,
       todayTasks: tasks.filter(
@@ -273,7 +286,9 @@ export function updateOverviewTasks(
       ).length,
       overdueTasks: tasks.filter(
         (t) =>
-          t.status !== "DONE" && t.dueAt && new Date(t.dueAt) < new Date(asOf),
+          t.status !== "DONE" &&
+          t.dueAt &&
+          Date.parse(t.dueAt) < Date.parse(effectiveAsOf),
       ).length,
       completedTasks: tasks.filter((t) => t.status === "DONE").length,
     },

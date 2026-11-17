@@ -102,6 +102,7 @@ export function AppSidebar({
           <SortableProjectList
             projects={projects}
             activeProjectId={activeProjectId}
+            onCloseSidebar={onClose}
           />
           <button
             type="button"

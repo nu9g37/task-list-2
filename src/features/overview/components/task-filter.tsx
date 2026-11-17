@@ -54,6 +54,7 @@ export function TaskFilter({
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<TaskFilterValue>(value);
   const root = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
   const panelId = useId();
   const activeCount =
     value.priorities.length + (value.sortBy !== "default" ? 1 : 0);
@@ -64,7 +65,10 @@ export function TaskFilter({
       if (!root.current?.contains(event.target as Node)) setOpen(false);
     }
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        setOpen(false);
+        trigger.current?.focus();
+      }
     }
     document.addEventListener("pointerdown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
@@ -82,11 +86,13 @@ export function TaskFilter({
   function apply(next: TaskFilterValue) {
     onApply(next);
     setOpen(false);
+    trigger.current?.focus();
   }
 
   return (
     <div className={styles.root} ref={root}>
       <button
+        ref={trigger}
         type="button"
         className={`${styles.trigger} ${activeCount ? styles.triggerActive : ""}`}
         aria-haspopup="dialog"
